@@ -11,33 +11,85 @@
             justify-content: center;
             align-items: center;
             background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        canvas {
-            margin: 10px 0;
-            border: 2px solid white;
+        video, canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 10px;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
     <video id="video" autoplay playsinline width="640" height="480"></video>
     <canvas id="captureFrame" width="640" height="480"></canvas>
+    <div id="controls">
+        <button id="btnFrente">Frente</button>
+        <button id="btnVerso">Verso</button>
+        <button id="btnSelfie">Selfie</button>
+    </div>
     <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
     <script>
         const video = document.getElementById('video');
         const captureCanvas = document.getElementById('captureFrame');
         const ctx = captureCanvas.getContext('2d');
+        const btnFrente = document.getElementById('btnFrente');
+        const btnVerso = document.getElementById('btnVerso');
+        const btnSelfie = document.getElementById('btnSelfie');
         const FRAME_RECT = { x: 160, y: 120, width: 320, height: 240 }; // Enquadramento
         let stream;
+        let facingMode = "environment"; // Define a câmera padrão como traseira
 
-        // Acessar câmera
+        // Configurar a câmera com base na direção
         async function startCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode }
+                });
                 video.srcObject = stream;
             } catch (error) {
                 console.error("Erro ao acessar câmera:", error);
             }
+        }
+
+        // Alterar o modo de câmera (frente/traseira)
+        function switchCamera(mode) {
+            facingMode = mode;
+            startCamera();
         }
 
         // Função para processar frame e detectar objeto
@@ -106,8 +158,11 @@
             requestAnimationFrame(processFrame);
         }
 
-        // Iniciar câmera automaticamente
+        // Iniciar câmera automaticamente e definir eventos para botões
         startCamera().then(() => processFrame());
+        btnFrente.addEventListener('click', () => switchCamera("environment"));
+        btnVerso.addEventListener('click', () => switchCamera("environment"));
+        btnSelfie.addEventListener('click', () => switchCamera("user"));
     </script>
 </body>
 </html>
