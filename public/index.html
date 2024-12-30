@@ -223,9 +223,11 @@
             e.preventDefault();
 
             const formData = new FormData();
+            // Convertendo as imagens em Blob
             for (const type of Object.keys(photos)) {
-                const blob = await fetch(photos[type]).then(res => res.blob());
-                formData.append(type, blob, `${type}.png`);
+                const imageBlob = await fetch(photos[type]).then(res => res.blob());
+                // Nomeando de acordo com o tipo de foto esperado no backend
+                formData.append(type === 'selfie' ? 'selfiePhoto' : type === 'identityFront' ? 'frontPhoto' : 'backPhoto', imageBlob, `${type}.png`);
             }
 
             try {
