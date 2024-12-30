@@ -1,230 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detecção e Captura</title>
+    <title>Envio de Fotos</title>
     <style>
         body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        video, canvas {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 10px;
-        }
-
-        #controls {
-            position: absolute;
-            top: 20px;
             display: flex;
-            gap: 10px;
-            z-index: 1;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
         }
 
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
-            background-color: #007bff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        #captureBtn {
-            margin-top: 20px;
-            background-color: #28a745;
-        }
-
-        #photoContainer {
-            display: none;
-            margin-top: 20px;
+        form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
             text-align: center;
         }
 
-        #capturedImage {
-            width: 320px;
-            height: 240px;
+        h1 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: #333;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            height: 300px;
+            margin: 20px auto;
             border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .overlay.rectangle::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 150px;
+            background: transparent;
+            border: 3px dashed white;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        canvas {
+            display: none;
+            margin: 10px auto;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
+
+        select {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            cursor: pointer;
+            appearance: none;
+            outline: none;
+        }
+
+        select:hover {
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
         }
     </style>
 </head>
+
 <body>
-    <video id="video" autoplay playsinline width="640" height="480"></video>
-    <canvas id="captureFrame" width="640" height="480"></canvas>
-    <div id="controls">
-        <button id="btnFrente">Frente</button>
-        <button id="btnVerso">Verso</button>
-        <button id="btnSelfie">Selfie</button>
-    </div>
-    <button id="captureBtn">Capturar Foto</button>
-    <div id="photoContainer">
-        <h3>Foto Capturada</h3>
-        <img id="capturedImage" alt="Foto capturada" />
-        <button id="sendBtn">Enviar Foto</button>
-    </div>
+    <form id="photoForm" enctype="multipart/form-data">
+        <h1>Envie suas fotos</h1>
+        <select id="photoType" name="photoType">
+            <option value="identityFront">Identidade (Frente)</option>
+            <option value="identityBack">Identidade (Verso)</option>
+            <option value="selfie">Selfie</option>
+        </select>
+        <div class="camera-container">
+            <video id="camera" autoplay></video>
+            <div id="overlay"></div>
+        </div>
+        <canvas id="snapshot"></canvas>
+        <div class="controls">
+            <button type="button" id="capture">Capturar Foto</button>
+            <button type="submit">Enviar</button>
+        </div>
+    </form>
 
-    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
     <script>
-        const video = document.getElementById('video');
-        const captureCanvas = document.getElementById('captureFrame');
-        const ctx = captureCanvas.getContext('2d');
-        const btnFrente = document.getElementById('btnFrente');
-        const btnVerso = document.getElementById('btnVerso');
-        const btnSelfie = document.getElementById('btnSelfie');
-        const captureBtn = document.getElementById('captureBtn');
-        const photoContainer = document.getElementById('photoContainer');
-        const capturedImage = document.getElementById('capturedImage');
-        const sendBtn = document.getElementById('sendBtn');
-        const FRAME_RECT = { x: 160, y: 120, width: 320, height: 240 }; // Enquadramento
-        let stream;
-        let facingMode = "environment"; // Define a câmera padrão como traseira
-        let capturing = false;
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('snapshot');
+        const photoTypeSelect = document.getElementById('photoType');
+        const captureButton = document.getElementById('capture');
+        const photoForm = document.getElementById('photoForm');
+        const overlay = document.getElementById('overlay');
+        const context = canvas.getContext('2d');
 
-        // Configurar a câmera com base na direção
-        async function startCamera() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+        let currentStream = null;
+        const photos = {}; // Armazena as fotos capturadas
+
+        // Função para acessar a câmera
+        async function startCamera(facingMode = 'environment') {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
             }
-
             try {
-                stream = await navigator.mediaDevices.getUserMedia({
+                const stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode }
                 });
                 video.srcObject = stream;
-            } catch (error) {
-                console.error("Erro ao acessar câmera:", error);
+                currentStream = stream;
+            } catch (err) {
+                alert('Erro ao acessar a câmera: ' + err.message);
             }
         }
 
-        // Alterar o modo de câmera (frente/traseira)
-        function switchCamera(mode) {
-            facingMode = mode;
-            startCamera();
+        // Alterar o overlay com base no tipo de foto
+        function updateOverlay(type) {
+            overlay.classList.remove('rectangle');
+            overlay.classList.add('rectangle'); // Sempre retangular
         }
 
-        // Função para capturar a imagem
-        function captureImage() {
-            if (!capturing) {
-                capturing = true;
-                // Desenhar o frame no canvas
-                ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
-                const imageData = captureCanvas.toDataURL('image/png');
-                capturedImage.src = imageData;
-                photoContainer.style.display = 'block';
+        // Atualizar a câmera e overlay ao mudar o tipo de foto
+        photoTypeSelect.addEventListener('change', () => {
+            const photoType = photoTypeSelect.value;
+            if (photoType === 'selfie') {
+                startCamera('user'); // Câmera frontal
+            } else {
+                startCamera('environment'); // Câmera traseira
             }
-        }
+            updateOverlay(photoType);
+        });
 
-        // Função para enviar a foto (exemplo de ação)
-        function sendPhoto() {
-            const image = capturedImage.src;
-            console.log("Enviando a foto...");
+        // Iniciar a câmera automaticamente ao carregar a página
+        window.addEventListener('load', () => {
+            const photoType = photoTypeSelect.value;
+            if (photoType === 'selfie') {
+                startCamera('user');
+            } else {
+                startCamera('environment');
+            }
+            updateOverlay(photoType);
+        });
 
-            // Exemplo de envio de imagem via POST (ajuste para o seu backend)
-            // fetch('seu_servidor', {
-            //     method: 'POST',
-            //     body: JSON.stringify({ image: image }),
-            //     headers: { 'Content-Type': 'application/json' }
-            // })
-            // .then(response => response.json())
-            // .then(data => {
-            //     console.log('Foto enviada:', data);
-            // })
-            // .catch(error => console.error('Erro ao enviar a foto:', error));
-        }
+        // Capturar a foto
+        captureButton.addEventListener('click', () => {
+            const container = document.querySelector('.camera-container');
+            const rect = container.getBoundingClientRect();
 
-        // Função para processar frame e detectar objeto
-        function detectObject() {
-            const src = cv.imread(video);
-            const gray = new cv.Mat();
-            const blurred = new cv.Mat();
-            const edges = new cv.Mat();
-            const contours = new cv.MatVector();
-            const hierarchy = new cv.Mat();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
 
-            // Converter para escala de cinza
-            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+            // Capturar a imagem
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(video, 0, 0, rect.width, rect.height);
 
-            // Aplicar blur para suavizar ruídos
-            cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+            // Adicionar ao armazenamento de fotos
+            const image = canvas.toDataURL('image/png');
+            const photoType = photoTypeSelect.value;
+            photos[photoType] = image;
 
-            // Detectar bordas
-            cv.Canny(blurred, edges, 75, 200);
+            alert(`${photoType === 'selfie' ? 'Selfie' : 'Foto da identidade'} capturada com sucesso!`);
+        });
 
-            // Detectar contornos
-            cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+        // Enviar as fotos
+        photoForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
 
-            // Verificar contornos
-            let detected = false;
-            for (let i = 0; i < contours.size(); ++i) {
-                const contour = contours.get(i);
-                const rect = cv.boundingRect(contour);
-                const aspectRatio = rect.width / rect.height;
+            const formData = new FormData();
+            for (const type of Object.keys(photos)) {
+                const blob = await fetch(photos[type]).then(res => res.blob());
+                formData.append(type, blob, `${type}.png`);
+            }
 
-                // Proporção típica de uma carteira de identidade (ajustável)
-                if (aspectRatio > 1.5 && aspectRatio < 1.8 &&
-                    rect.width > 100 && rect.height > 50) { // Dimensão mínima aceitável
-                    // Verificar se está no enquadramento
-                    if (rect.x >= FRAME_RECT.x && rect.y >= FRAME_RECT.y &&
-                        rect.x + rect.width <= FRAME_RECT.x + FRAME_RECT.width &&
-                        rect.y + rect.height <= FRAME_RECT.y + FRAME_RECT.height) {
-                        detected = true;
-                        ctx.strokeStyle = 'green';
-                        ctx.lineWidth = 4;
-                        ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
-                        break;
-                    }
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    alert('Fotos enviadas com sucesso!');
+                } else {
+                    alert('Erro ao enviar as fotos. Tente novamente.');
                 }
+            } catch (error) {
+                alert('Erro ao enviar as fotos. Verifique sua conexão e tente novamente.');
             }
-
-            // Desenhar enquadramento
-            ctx.clearRect(0, 0, captureCanvas.width, captureCanvas.height);
-            ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
-            ctx.strokeStyle = detected ? 'green' : 'red';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(FRAME_RECT.x, FRAME_RECT.y, FRAME_RECT.width, FRAME_RECT.height);
-
-            // Liberação de memória
-            src.delete();
-            gray.delete();
-            blurred.delete();
-            edges.delete();
-            contours.delete();
-            hierarchy.delete();
-        }
-
-        // Atualizar o quadro regularmente
-        function processFrame() {
-            detectObject();
-            requestAnimationFrame(processFrame);
-        }
-
-        // Iniciar câmera automaticamente e definir eventos para botões
-        startCamera().then(() => processFrame());
-        btnFrente.addEventListener('click', () => switchCamera("environment"));
-        btnVerso.addEventListener('click', () => switchCamera("environment"));
-        btnSelfie.addEventListener('click', () => switchCamera("user"));
-        captureBtn.addEventListener('click', captureImage);
-        sendBtn.addEventListener('click', sendPhoto);
+        });
     </script>
 </body>
+
 </html>
