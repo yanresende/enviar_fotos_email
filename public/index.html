@@ -121,14 +121,19 @@
 <body>
     <form id="photoForm" enctype="multipart/form-data">
         <h1>Envie suas fotos</h1>
+        <select id="photoType" name="photoType">
+            <option value="identityFront">Identidade (Frente)</option>
+            <option value="identityBack">Identidade (Verso)</option>
+            <option value="selfie">Selfie</option>
+        </select>
         <div class="camera-container">
             <video id="camera" autoplay></video>
-            <div id="overlay" class="overlay square"></div>
+            <div id="overlay"></div>
         </div>
         <canvas id="snapshot"></canvas>
         <div class="controls">
+            <button type="button" id="startCamera">Abrir Câmera</button>
             <button type="button" id="capture">Capturar Foto</button>
-            <button type="button" id="switchToSelfie">Trocar para Selfie</button>
             <button type="submit">Enviar</button>
         </div>
     </form>
@@ -136,23 +141,52 @@
     <script>
         const video = document.getElementById('camera');
         const canvas = document.getElementById('snapshot');
+        const photoTypeSelect = document.getElementById('photoType');
+        const startCameraButton = document.getElementById('startCamera');
         const captureButton = document.getElementById('capture');
-        const switchToSelfieButton = document.getElementById('switchToSelfie');
         const photoForm = document.getElementById('photoForm');
         const overlay = document.getElementById('overlay');
         const context = canvas.getContext('2d');
 
-        let photoIndex = 1; // Controle para as três fotos
-        const photos = []; // Array para armazenar as fotos
+        let currentStream = null;
+        const photos = {}; // Armazena as fotos capturadas
 
-        // Acessar a câmera
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
+        // Função para acessar a câmera
+        async function startCamera(facingMode = 'environment') {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode }
+                });
                 video.srcObject = stream;
-            })
-            .catch(err => {
+                currentStream = stream;
+            } catch (err) {
                 alert('Erro ao acessar a câmera: ' + err.message);
-            });
+            }
+        }
+
+        // Alterar o overlay com base no tipo de foto
+        function updateOverlay(type) {
+            overlay.classList.remove('square', 'oval');
+            if (type === 'selfie') {
+                overlay.classList.add('oval');
+            } else {
+                overlay.classList.add('square');
+            }
+        }
+
+        // Abrir a câmera com base no tipo de foto selecionado
+        startCameraButton.addEventListener('click', () => {
+            const photoType = photoTypeSelect.value;
+            if (photoType === 'selfie') {
+                startCamera('user'); // Câmera frontal
+            } else {
+                startCamera('environment'); // Câmera traseira
+            }
+            updateOverlay(photoType);
+        });
 
         // Capturar a foto
         captureButton.addEventListener('click', () => {
@@ -162,33 +196,16 @@
             canvas.width = rect.width;
             canvas.height = rect.height;
 
-            // Capturar a imagem inteira
+            // Capturar a imagem
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.drawImage(video, 0, 0, rect.width, rect.height);
 
-            // Adicionar ao array de fotos
+            // Adicionar ao armazenamento de fotos
             const image = canvas.toDataURL('image/png');
-            photos.push({ index: photoIndex, image });
+            const photoType = photoTypeSelect.value;
+            photos[photoType] = image;
 
-            alert(`Foto ${photoIndex} capturada com sucesso!`);
-            photoIndex++;
-
-            // Trocar para selfie automaticamente após capturar as duas primeiras fotos
-            if (photoIndex === 3) {
-                overlay.classList.remove('square');
-                overlay.classList.add('oval');
-            }
-
-            // Exibir mensagem ao concluir as fotos
-            if (photoIndex > 3) {
-                alert('Você já capturou todas as fotos. Clique em Enviar.');
-            }
-        });
-
-        // Trocar para selfie manualmente
-        switchToSelfieButton.addEventListener('click', () => {
-            overlay.classList.remove('square');
-            overlay.classList.add('oval');
+            alert(`${photoType === 'selfie' ? 'Selfie' : 'Foto da identidade'} capturada com sucesso!`);
         });
 
         // Enviar as fotos
@@ -196,9 +213,9 @@
             e.preventDefault();
 
             const formData = new FormData();
-            for (const [index, photo] of photos.entries()) {
-                const blob = await fetch(photo.image).then(res => res.blob());
-                formData.append(`photo${index + 1}`, blob, `photo${index + 1}.png`);
+            for (const type of Object.keys(photos)) {
+                const blob = await fetch(photos[type]).then(res => res.blob());
+                formData.append(type, blob, `${type}.png`);
             }
 
             try {
