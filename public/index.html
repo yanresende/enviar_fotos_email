@@ -38,7 +38,7 @@
             width: 100%;
             max-width: 300px;
             height: 300px;
-            margin: 0 auto;
+            margin: 0 auto 20px;
             border: 2px solid #ddd;
             border-radius: 10px;
             overflow: hidden;
@@ -59,7 +59,7 @@
             background: rgba(0, 0, 0, 0.5);
         }
 
-        .overlay::before {
+        .overlay.square::before {
             content: '';
             position: absolute;
             top: 50%;
@@ -68,7 +68,20 @@
             height: 200px;
             background: transparent;
             border: 3px dashed white;
-            border-radius: 50%; /* Altere para 0 para criar um enquadramento quadrado */
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .overlay.oval::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 250px;
+            background: transparent;
+            border: 3px dashed white;
+            border-radius: 50%;
             transform: translate(-50%, -50%);
             z-index: 2;
         }
@@ -110,11 +123,12 @@
         <h1>Envie suas fotos</h1>
         <div class="camera-container">
             <video id="camera" autoplay></video>
-            <div class="overlay"></div>
+            <div id="overlay" class="overlay square"></div>
         </div>
         <canvas id="snapshot"></canvas>
         <div class="controls">
             <button type="button" id="capture">Capturar Foto</button>
+            <button type="button" id="switchToSelfie">Trocar para Selfie</button>
             <button type="submit">Enviar</button>
         </div>
     </form>
@@ -123,8 +137,13 @@
         const video = document.getElementById('camera');
         const canvas = document.getElementById('snapshot');
         const captureButton = document.getElementById('capture');
+        const switchToSelfieButton = document.getElementById('switchToSelfie');
         const photoForm = document.getElementById('photoForm');
+        const overlay = document.getElementById('overlay');
         const context = canvas.getContext('2d');
+
+        let photoIndex = 1; // Controle para as três fotos
+        const photos = []; // Array para armazenar as fotos
 
         // Acessar a câmera
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -143,45 +162,59 @@
             canvas.width = rect.width;
             canvas.height = rect.height;
 
-            // Enquadrar apenas o que está dentro do círculo/retângulo
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const radius = 100; // Ajuste conforme o tamanho do círculo
-
+            // Capturar a imagem inteira
             context.clearRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(
-                video,
-                centerX - radius, centerY - radius, radius * 2, radius * 2,
-                0, 0, canvas.width, canvas.height
-            );
+            context.drawImage(video, 0, 0, rect.width, rect.height);
 
-            canvas.style.display = 'block';
-            video.style.display = 'none';
+            // Adicionar ao array de fotos
+            const image = canvas.toDataURL('image/png');
+            photos.push({ index: photoIndex, image });
+
+            alert(`Foto ${photoIndex} capturada com sucesso!`);
+            photoIndex++;
+
+            // Trocar para selfie automaticamente após capturar as duas primeiras fotos
+            if (photoIndex === 3) {
+                overlay.classList.remove('square');
+                overlay.classList.add('oval');
+            }
+
+            // Exibir mensagem ao concluir as fotos
+            if (photoIndex > 3) {
+                alert('Você já capturou todas as fotos. Clique em Enviar.');
+            }
         });
 
-        // Enviar a foto
+        // Trocar para selfie manualmente
+        switchToSelfieButton.addEventListener('click', () => {
+            overlay.classList.remove('square');
+            overlay.classList.add('oval');
+        });
+
+        // Enviar as fotos
         photoForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append('photo', blob, 'photo.png');
+            const formData = new FormData();
+            for (const [index, photo] of photos.entries()) {
+                const blob = await fetch(photo.image).then(res => res.blob());
+                formData.append(`photo${index + 1}`, blob, `photo${index + 1}.png`);
+            }
 
-                try {
-                    const response = await fetch('/upload', {
-                        method: 'POST',
-                        body: formData,
-                    });
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
 
-                    if (response.ok) {
-                        alert('Foto enviada com sucesso!');
-                    } else {
-                        alert('Erro ao enviar a foto. Tente novamente.');
-                    }
-                } catch (error) {
-                    alert('Erro ao enviar a foto. Verifique sua conexão e tente novamente.');
+                if (response.ok) {
+                    alert('Fotos enviadas com sucesso!');
+                } else {
+                    alert('Erro ao enviar as fotos. Tente novamente.');
                 }
-            }, 'image/png');
+            } catch (error) {
+                alert('Erro ao enviar as fotos. Verifique sua conexão e tente novamente.');
+            }
         });
     </script>
 </body>
