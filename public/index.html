@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detecção Melhorada</title>
+    <title>Detecção e Captura</title>
     <style>
         body {
             display: flex;
@@ -48,6 +48,24 @@
         button:hover {
             background-color: #0056b3;
         }
+
+        #captureBtn {
+            margin-top: 20px;
+            display: none;
+            background-color: #28a745;
+        }
+
+        #photoContainer {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #capturedImage {
+            width: 320px;
+            height: 240px;
+            border: 2px solid #ddd;
+        }
     </style>
 </head>
 <body>
@@ -58,6 +76,13 @@
         <button id="btnVerso">Verso</button>
         <button id="btnSelfie">Selfie</button>
     </div>
+    <button id="captureBtn">Capturar Foto</button>
+    <div id="photoContainer">
+        <h3>Foto Capturada</h3>
+        <img id="capturedImage" alt="Foto capturada" />
+        <button id="sendBtn">Enviar Foto</button>
+    </div>
+
     <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
     <script>
         const video = document.getElementById('video');
@@ -66,9 +91,14 @@
         const btnFrente = document.getElementById('btnFrente');
         const btnVerso = document.getElementById('btnVerso');
         const btnSelfie = document.getElementById('btnSelfie');
+        const captureBtn = document.getElementById('captureBtn');
+        const photoContainer = document.getElementById('photoContainer');
+        const capturedImage = document.getElementById('capturedImage');
+        const sendBtn = document.getElementById('sendBtn');
         const FRAME_RECT = { x: 160, y: 120, width: 320, height: 240 }; // Enquadramento
         let stream;
         let facingMode = "environment"; // Define a câmera padrão como traseira
+        let capturing = false;
 
         // Configurar a câmera com base na direção
         async function startCamera() {
@@ -90,6 +120,36 @@
         function switchCamera(mode) {
             facingMode = mode;
             startCamera();
+        }
+
+        // Função para capturar a imagem
+        function captureImage() {
+            if (!capturing) {
+                capturing = true;
+                // Desenhar o frame no canvas
+                ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+                const imageData = captureCanvas.toDataURL('image/png');
+                capturedImage.src = imageData;
+                photoContainer.style.display = 'block';
+            }
+        }
+
+        // Função para enviar a foto (exemplo de ação)
+        function sendPhoto() {
+            const image = capturedImage.src;
+            console.log("Enviando a foto...");
+
+            // Exemplo de envio de imagem via POST (ajuste para o seu backend)
+            // fetch('seu_servidor', {
+            //     method: 'POST',
+            //     body: JSON.stringify({ image: image }),
+            //     headers: { 'Content-Type': 'application/json' }
+            // })
+            // .then(response => response.json())
+            // .then(data => {
+            //     console.log('Foto enviada:', data);
+            // })
+            // .catch(error => console.error('Erro ao enviar a foto:', error));
         }
 
         // Função para processar frame e detectar objeto
@@ -163,6 +223,8 @@
         btnFrente.addEventListener('click', () => switchCamera("environment"));
         btnVerso.addEventListener('click', () => switchCamera("environment"));
         btnSelfie.addEventListener('click', () => switchCamera("user"));
+        captureBtn.addEventListener('click', captureImage);
+        sendBtn.addEventListener('click', sendPhoto);
     </script>
 </body>
 </html>
