@@ -4,220 +4,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Envio de Fotos</title>
+    <title>Detecção de Objeto com OpenCV.js</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
         }
 
-        form {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
+        video, canvas {
+            display: block;
+            margin: 10px auto;
         }
 
-        h1 {
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            color: #333;
-        }
-
-        .camera-container {
-            position: relative;
-            width: 100%;
-            max-width: 300px;
-            height: 300px;
-            margin: 20px auto;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .controls {
-            margin-top: 20px;
-        }
-
-        button {
-            background: linear-gradient(135deg, #6a11cb, #2575fc);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.3s ease;
-            margin: 5px;
-        }
-
-        button:hover {
-            background: linear-gradient(135deg, #2575fc, #6a11cb);
-        }
-
-        select {
-            width: 100%;
-            max-width: 300px;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            background: linear-gradient(135deg, #6a11cb, #2575fc);
-            color: white;
-            font-size: 1rem;
-            margin-bottom: 20px;
-            cursor: pointer;
-            appearance: none;
-            outline: none;
-        }
-
-        select:hover {
-            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        #captureFrame {
+            border: 2px solid white;
         }
     </style>
 </head>
 
 <body>
-    <form id="photoForm" enctype="multipart/form-data">
-        <h1>Envie suas fotos</h1>
-        <select id="photoType" name="photoType">
-            <option value="identityFront">Identidade (Frente)</option>
-            <option value="identityBack">Identidade (Verso)</option>
-            <option value="selfie">Selfie</option>
-        </select>
-        <div class="camera-container">
-            <video id="camera" autoplay></video>
-            <canvas id="overlayCanvas"></canvas>
-        </div>
-        <canvas id="snapshot"></canvas>
-        <div class="controls">
-            <button type="button" id="capture">Capturar Foto</button>
-            <button type="submit">Enviar</button>
-        </div>
-    </form>
+    <h1>Detecção de Objeto</h1>
+    <video id="video" autoplay playsinline width="640" height="480"></video>
+    <canvas id="captureFrame" width="640" height="480"></canvas>
+    <canvas id="outputFrame" width="640" height="480" style="display:none;"></canvas>
+    <button id="capture">Capturar e Detectar</button>
 
+    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
     <script>
-        const video = document.getElementById('camera');
-        const overlayCanvas = document.getElementById('overlayCanvas');
-        const context = overlayCanvas.getContext('2d');
-        const photoTypeSelect = document.getElementById('photoType');
-        const captureButton = document.getElementById('capture');
-        const photoForm = document.getElementById('photoForm');
-        const photos = {}; // Armazena as fotos capturadas
-        let currentStream = null;
+        const video = document.getElementById('video');
+        const captureCanvas = document.getElementById('captureFrame');
+        const outputCanvas = document.getElementById('outputFrame');
+        const ctx = captureCanvas.getContext('2d');
+        let stream;
 
-        overlayCanvas.width = 300;
-        overlayCanvas.height = 300;
+        const FRAME_RECT = { x: 160, y: 120, width: 320, height: 240 }; // Enquadramento
 
-        // Posição e dimensões do retângulo de enquadramento
-        const frameRect = {
-            x: 50,
-            y: 75,
-            width: 200,
-            height: 150
-        };
-
-        // Função para desenhar o retângulo
-        function drawFrame(detected = false) {
-            context.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-            context.strokeStyle = detected ? 'green' : 'white';
-            context.lineWidth = 4;
-            context.strokeRect(frameRect.x, frameRect.y, frameRect.width, frameRect.height);
-        }
-
-        // Função para acessar a câmera
-        async function startCamera(facingMode = 'environment') {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
+        // Acessar câmera
+        async function startCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode }
-                });
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = stream;
-                currentStream = stream;
-            } catch (err) {
-                alert('Erro ao acessar a câmera: ' + err.message);
+            } catch (error) {
+                console.error("Erro ao acessar câmera:", error);
             }
         }
 
-        // Função para verificar se o objeto está no enquadramento
-        function isObjectInsideFrame() {
-            // Simula detecção básica baseada na presença de movimento no quadro
-            // Aqui, deve-se implementar um detector real com técnicas como AI ou diferenciação de pixels
-            // Para simplificação, retornamos aleatoriamente "true" ou "false"
-            return Math.random() > 0.5; // Substitua pela detecção real
+        // Desenhar enquadramento
+        function drawFrame(detected = false) {
+            ctx.clearRect(0, 0, captureCanvas.width, captureCanvas.height);
+            ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+            ctx.strokeStyle = detected ? 'green' : 'red';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(FRAME_RECT.x, FRAME_RECT.y, FRAME_RECT.width, FRAME_RECT.height);
         }
 
-        // Atualizar a câmera e overlay ao mudar o tipo de foto
-        photoTypeSelect.addEventListener('change', () => {
-            const photoType = photoTypeSelect.value;
-            if (photoType === 'selfie') {
-                startCamera('user'); // Câmera frontal
-            } else {
-                startCamera('environment'); // Câmera traseira
-            }
-        });
+        // Capturar quadro e detectar bordas
+        function detectObject() {
+            // Configuração do OpenCV
+            const src = cv.imread(captureCanvas);
+            const gray = new cv.Mat();
+            const edges = new cv.Mat();
+            const contours = new cv.MatVector();
+            const hierarchy = new cv.Mat();
 
-        // Iniciar a câmera automaticamente ao carregar a página
-        window.addEventListener('load', () => {
-            const photoType = photoTypeSelect.value;
-            if (photoType === 'selfie') {
-                startCamera('user');
-            } else {
-                startCamera('environment');
-            }
-        });
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0); // Conversão para escala de cinza
+            cv.Canny(gray, edges, 50, 150, 3, false); // Detecção de bordas
+            cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-        // Atualizar o enquadramento periodicamente
-        setInterval(() => {
-            const detected = isObjectInsideFrame();
+            let detected = false;
+
+            // Iterar pelos contornos detectados
+            for (let i = 0; i < contours.size(); ++i) {
+                const contour = contours.get(i);
+                const rect = cv.boundingRect(contour); // Obter retângulo delimitador do contorno
+
+                // Verificar se o retângulo está dentro do enquadramento
+                if (
+                    rect.x >= FRAME_RECT.x &&
+                    rect.y >= FRAME_RECT.y &&
+                    rect.x + rect.width <= FRAME_RECT.x + FRAME_RECT.width &&
+                    rect.y + rect.height <= FRAME_RECT.y + FRAME_RECT.height
+                ) {
+                    detected = true;
+                    break;
+                }
+            }
+
             drawFrame(detected);
-        }, 100);
 
-        // Capturar a foto
-        captureButton.addEventListener('click', () => {
-            const container = document.querySelector('.camera-container');
-            const snapshotCanvas = document.getElementById('snapshot');
-            const snapshotContext = snapshotCanvas.getContext('2d');
+            // Liberação de memória
+            src.delete();
+            gray.delete();
+            edges.delete();
+            contours.delete();
+            hierarchy.delete();
+        }
 
-            snapshotCanvas.width = container.clientWidth;
-            snapshotCanvas.height = container.clientHeight;
-
-            // Capturar a imagem
-            snapshotContext.clearRect(0, 0, snapshotCanvas.width, snapshotCanvas.height);
-            snapshotContext.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
-
-            // Armazenar a imagem capturada
-            const image = snapshotCanvas.toDataURL('image/png');
-            const photoType = photoTypeSelect.value;
-            photos[photoType] = image;
-
-            alert(`${photoType === 'selfie' ? 'Selfie' : 'Foto da identidade'} capturada com sucesso!`);
+        // Capturar evento
+        document.getElementById('capture').addEventListener('click', () => {
+            drawFrame();
+            detectObject();
         });
+
+        // Iniciar câmera automaticamente
+        startCamera();
     </script>
 </body>
 
