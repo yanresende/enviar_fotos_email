@@ -33,9 +33,48 @@
             color: #333;
         }
 
-        video,
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .overlay::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            background: transparent;
+            border: 3px dashed white;
+            border-radius: 50%; /* Altere para 0 para criar um enquadramento quadrado */
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
         canvas {
-            display: block;
+            display: none;
             margin: 10px auto;
             border: 2px solid #ddd;
             border-radius: 5px;
@@ -69,8 +108,11 @@
 <body>
     <form id="photoForm" enctype="multipart/form-data">
         <h1>Envie suas fotos</h1>
-        <video id="camera" autoplay></video>
-        <canvas id="snapshot" style="display: none;"></canvas>
+        <div class="camera-container">
+            <video id="camera" autoplay></video>
+            <div class="overlay"></div>
+        </div>
+        <canvas id="snapshot"></canvas>
         <div class="controls">
             <button type="button" id="capture">Capturar Foto</button>
             <button type="submit">Enviar</button>
@@ -95,9 +137,24 @@
 
         // Capturar a foto
         captureButton.addEventListener('click', () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const container = document.querySelector('.camera-container');
+            const rect = container.getBoundingClientRect();
+
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            // Enquadrar apenas o que está dentro do círculo/retângulo
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const radius = 100; // Ajuste conforme o tamanho do círculo
+
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(
+                video,
+                centerX - radius, centerY - radius, radius * 2, radius * 2,
+                0, 0, canvas.width, canvas.height
+            );
+
             canvas.style.display = 'block';
             video.style.display = 'none';
         });
