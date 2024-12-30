@@ -1,47 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detecção de Objeto com OpenCV.js</title>
+    <title>Detecção Melhorada</title>
     <style>
         body {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            font-family: Arial, sans-serif;
             background-color: #f4f4f4;
         }
 
-        video, canvas {
-            display: block;
-            margin: 10px auto;
-        }
-
-        #captureFrame {
+        canvas {
+            margin: 10px 0;
             border: 2px solid white;
         }
     </style>
 </head>
-
 <body>
-    <h1>Detecção de Objeto</h1>
     <video id="video" autoplay playsinline width="640" height="480"></video>
     <canvas id="captureFrame" width="640" height="480"></canvas>
-    <canvas id="outputFrame" width="640" height="480" style="display:none;"></canvas>
-    <button id="capture">Capturar e Detectar</button>
-
     <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
     <script>
         const video = document.getElementById('video');
         const captureCanvas = document.getElementById('captureFrame');
-        const outputCanvas = document.getElementById('outputFrame');
         const ctx = captureCanvas.getContext('2d');
-        let stream;
-
         const FRAME_RECT = { x: 160, y: 120, width: 320, height: 240 }; // Enquadramento
+        let stream;
 
         // Acessar câmera
         async function startCamera() {
@@ -53,66 +40,74 @@
             }
         }
 
-        // Desenhar enquadramento
-        function drawFrame(detected = false) {
+        // Função para processar frame e detectar objeto
+        function detectObject() {
+            const src = cv.imread(video);
+            const gray = new cv.Mat();
+            const blurred = new cv.Mat();
+            const edges = new cv.Mat();
+            const contours = new cv.MatVector();
+            const hierarchy = new cv.Mat();
+
+            // Converter para escala de cinza
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+            // Aplicar blur para suavizar ruídos
+            cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+
+            // Detectar bordas
+            cv.Canny(blurred, edges, 75, 200);
+
+            // Detectar contornos
+            cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+            // Verificar contornos
+            let detected = false;
+            for (let i = 0; i < contours.size(); ++i) {
+                const contour = contours.get(i);
+                const rect = cv.boundingRect(contour);
+                const aspectRatio = rect.width / rect.height;
+
+                // Proporção típica de uma carteira de identidade (ajustável)
+                if (aspectRatio > 1.5 && aspectRatio < 1.8 &&
+                    rect.width > 100 && rect.height > 50) { // Dimensão mínima aceitável
+                    // Verificar se está no enquadramento
+                    if (rect.x >= FRAME_RECT.x && rect.y >= FRAME_RECT.y &&
+                        rect.x + rect.width <= FRAME_RECT.x + FRAME_RECT.width &&
+                        rect.y + rect.height <= FRAME_RECT.y + FRAME_RECT.height) {
+                        detected = true;
+                        ctx.strokeStyle = 'green';
+                        ctx.lineWidth = 4;
+                        ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+                        break;
+                    }
+                }
+            }
+
+            // Desenhar enquadramento
             ctx.clearRect(0, 0, captureCanvas.width, captureCanvas.height);
             ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
             ctx.strokeStyle = detected ? 'green' : 'red';
             ctx.lineWidth = 4;
             ctx.strokeRect(FRAME_RECT.x, FRAME_RECT.y, FRAME_RECT.width, FRAME_RECT.height);
-        }
-
-        // Capturar quadro e detectar bordas
-        function detectObject() {
-            // Configuração do OpenCV
-            const src = cv.imread(captureCanvas);
-            const gray = new cv.Mat();
-            const edges = new cv.Mat();
-            const contours = new cv.MatVector();
-            const hierarchy = new cv.Mat();
-
-            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0); // Conversão para escala de cinza
-            cv.Canny(gray, edges, 50, 150, 3, false); // Detecção de bordas
-            cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-            let detected = false;
-
-            // Iterar pelos contornos detectados
-            for (let i = 0; i < contours.size(); ++i) {
-                const contour = contours.get(i);
-                const rect = cv.boundingRect(contour); // Obter retângulo delimitador do contorno
-
-                // Verificar se o retângulo está dentro do enquadramento
-                if (
-                    rect.x >= FRAME_RECT.x &&
-                    rect.y >= FRAME_RECT.y &&
-                    rect.x + rect.width <= FRAME_RECT.x + FRAME_RECT.width &&
-                    rect.y + rect.height <= FRAME_RECT.y + FRAME_RECT.height
-                ) {
-                    detected = true;
-                    break;
-                }
-            }
-
-            drawFrame(detected);
 
             // Liberação de memória
             src.delete();
             gray.delete();
+            blurred.delete();
             edges.delete();
             contours.delete();
             hierarchy.delete();
         }
 
-        // Capturar evento
-        document.getElementById('capture').addEventListener('click', () => {
-            drawFrame();
+        // Atualizar o quadro regularmente
+        function processFrame() {
             detectObject();
-        });
+            requestAnimationFrame(processFrame);
+        }
 
         // Iniciar câmera automaticamente
-        startCamera();
+        startCamera().then(() => processFrame());
     </script>
 </body>
-
 </html>
