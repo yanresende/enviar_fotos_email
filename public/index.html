@@ -50,36 +50,13 @@
             object-fit: cover;
         }
 
-        .overlay {
+        canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-        }
-
-        .overlay.rectangle::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 200px;
-            height: 150px;
-            background: transparent;
-            border: 3px dashed white;
-            transform: translate(-50%, -50%);
-            z-index: 2;
-        }
-
-        canvas {
-            display: none;
-            margin: 10px auto;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            width: 100%;
-            max-width: 300px;
-            height: auto;
+            pointer-events: none;
         }
 
         .controls {
@@ -133,7 +110,7 @@
         </select>
         <div class="camera-container">
             <video id="camera" autoplay></video>
-            <div id="overlay"></div>
+            <canvas id="overlayCanvas"></canvas>
         </div>
         <canvas id="snapshot"></canvas>
         <div class="controls">
@@ -144,15 +121,32 @@
 
     <script>
         const video = document.getElementById('camera');
-        const canvas = document.getElementById('snapshot');
+        const overlayCanvas = document.getElementById('overlayCanvas');
+        const context = overlayCanvas.getContext('2d');
         const photoTypeSelect = document.getElementById('photoType');
         const captureButton = document.getElementById('capture');
         const photoForm = document.getElementById('photoForm');
-        const overlay = document.getElementById('overlay');
-        const context = canvas.getContext('2d');
-
-        let currentStream = null;
         const photos = {}; // Armazena as fotos capturadas
+        let currentStream = null;
+
+        overlayCanvas.width = 300;
+        overlayCanvas.height = 300;
+
+        // Posição e dimensões do retângulo de enquadramento
+        const frameRect = {
+            x: 50,
+            y: 75,
+            width: 200,
+            height: 150
+        };
+
+        // Função para desenhar o retângulo
+        function drawFrame(detected = false) {
+            context.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+            context.strokeStyle = detected ? 'green' : 'white';
+            context.lineWidth = 4;
+            context.strokeRect(frameRect.x, frameRect.y, frameRect.width, frameRect.height);
+        }
 
         // Função para acessar a câmera
         async function startCamera(facingMode = 'environment') {
@@ -170,10 +164,12 @@
             }
         }
 
-        // Alterar o overlay com base no tipo de foto
-        function updateOverlay(type) {
-            overlay.classList.remove('rectangle');
-            overlay.classList.add('rectangle'); // Sempre retangular
+        // Função para verificar se o objeto está no enquadramento
+        function isObjectInsideFrame() {
+            // Simula detecção básica baseada na presença de movimento no quadro
+            // Aqui, deve-se implementar um detector real com técnicas como AI ou diferenciação de pixels
+            // Para simplificação, retornamos aleatoriamente "true" ou "false"
+            return Math.random() > 0.5; // Substitua pela detecção real
         }
 
         // Atualizar a câmera e overlay ao mudar o tipo de foto
@@ -184,7 +180,6 @@
             } else {
                 startCamera('environment'); // Câmera traseira
             }
-            updateOverlay(photoType);
         });
 
         // Iniciar a câmera automaticamente ao carregar a página
@@ -195,53 +190,33 @@
             } else {
                 startCamera('environment');
             }
-            updateOverlay(photoType);
         });
+
+        // Atualizar o enquadramento periodicamente
+        setInterval(() => {
+            const detected = isObjectInsideFrame();
+            drawFrame(detected);
+        }, 100);
 
         // Capturar a foto
         captureButton.addEventListener('click', () => {
             const container = document.querySelector('.camera-container');
-            const rect = container.getBoundingClientRect();
+            const snapshotCanvas = document.getElementById('snapshot');
+            const snapshotContext = snapshotCanvas.getContext('2d');
 
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+            snapshotCanvas.width = container.clientWidth;
+            snapshotCanvas.height = container.clientHeight;
 
             // Capturar a imagem
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(video, 0, 0, rect.width, rect.height);
+            snapshotContext.clearRect(0, 0, snapshotCanvas.width, snapshotCanvas.height);
+            snapshotContext.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
 
-            // Adicionar ao armazenamento de fotos
-            const image = canvas.toDataURL('image/png');
+            // Armazenar a imagem capturada
+            const image = snapshotCanvas.toDataURL('image/png');
             const photoType = photoTypeSelect.value;
             photos[photoType] = image;
 
             alert(`${photoType === 'selfie' ? 'Selfie' : 'Foto da identidade'} capturada com sucesso!`);
-        });
-
-        // Enviar as fotos
-        photoForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const formData = new FormData();
-            for (const type of Object.keys(photos)) {
-                const blob = await fetch(photos[type]).then(res => res.blob());
-                formData.append(type, blob, `${type}.png`);
-            }
-
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                if (response.ok) {
-                    alert('Fotos enviadas com sucesso!');
-                } else {
-                    alert('Erro ao enviar as fotos. Tente novamente.');
-                }
-            } catch (error) {
-                alert('Erro ao enviar as fotos. Verifique sua conexão e tente novamente.');
-            }
         });
     </script>
 </body>
