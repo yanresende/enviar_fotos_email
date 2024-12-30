@@ -33,21 +33,19 @@
             color: #333;
         }
 
-        label {
-            display: block;
-            margin: 15px 0 5px;
-            font-size: 1rem;
-            color: #555;
-        }
-
-        input[type="file"] {
+        video,
+        canvas {
             display: block;
             margin: 10px auto;
-            padding: 10px;
-            border: 1px solid #ddd;
+            border: 2px solid #ddd;
             border-radius: 5px;
-            width: calc(100% - 20px);
-            font-size: 0.9rem;
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+        }
+
+        .controls {
+            margin-top: 20px;
         }
 
         button {
@@ -58,8 +56,8 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 1rem;
-            margin-top: 20px;
             transition: background 0.3s ease;
+            margin: 5px;
         }
 
         button:hover {
@@ -69,53 +67,64 @@
 </head>
 
 <body>
-    <form id="photoForm" enctype="multipart/form-data" method="POST" action="/upload">
+    <form id="photoForm" enctype="multipart/form-data">
         <h1>Envie suas fotos</h1>
-    
-        <label for="frontPhoto">Foto da Frente:</label>
-        <input type="file" id="frontPhoto" name="frontPhoto" accept="image/*" required>
-    
-        <label for="backPhoto">Foto de Trás:</label>
-        <input type="file" id="backPhoto" name="backPhoto" accept="image/*" required>
-    
-        <label for="selfiePhoto">Foto Selfie:</label>
-        <input type="file" id="selfiePhoto" name="selfiePhoto" accept="image/*" required>
-    
-        <button type="submit">Enviar</button>
+        <video id="camera" autoplay></video>
+        <canvas id="snapshot" style="display: none;"></canvas>
+        <div class="controls">
+            <button type="button" id="capture">Capturar Foto</button>
+            <button type="submit">Enviar</button>
+        </div>
     </form>
 
     <script>
-        document.getElementById('photoForm').addEventListener('submit', async function (e) {
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('snapshot');
+        const captureButton = document.getElementById('capture');
+        const photoForm = document.getElementById('photoForm');
+        const context = canvas.getContext('2d');
+
+        // Acessar a câmera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                alert('Erro ao acessar a câmera: ' + err.message);
+            });
+
+        // Capturar a foto
+        captureButton.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.style.display = 'block';
+            video.style.display = 'none';
+        });
+
+        // Enviar a foto
+        photoForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            const formData = new FormData();
-            const frontPhoto = document.getElementById('frontPhoto');
-            const backPhoto = document.getElementById('backPhoto');
-            const selfiePhoto = document.getElementById('selfiePhoto');
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('photo', blob, 'photo.png');
 
-            if (frontPhoto.files.length === 0 || backPhoto.files.length === 0 || selfiePhoto.files.length === 0) {
-                alert('Por favor, selecione todas as fotos antes de enviar.');
-                return;
-            }
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData,
+                    });
 
-            formData.append('frontPhoto', frontPhoto.files[0]);
-            formData.append('backPhoto', backPhoto.files[0]);
-            formData.append('selfiePhoto', selfiePhoto.files[0]);
-
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                if (response.ok) {
-                    alert('Fotos enviadas com sucesso!');
-                } else {
-                    alert('Erro ao enviar as fotos. Tente novamente.');
+                    if (response.ok) {
+                        alert('Foto enviada com sucesso!');
+                    } else {
+                        alert('Erro ao enviar a foto. Tente novamente.');
+                    }
+                } catch (error) {
+                    alert('Erro ao enviar a foto. Verifique sua conexão e tente novamente.');
                 }
-            } catch (error) {
-                alert('Erro ao enviar as fotos. Verifique sua conexão e tente novamente.');
-            }
+            }, 'image/png');
         });
     </script>
 </body>
