@@ -38,7 +38,7 @@
             width: 100%;
             max-width: 300px;
             height: 300px;
-            margin: 0 auto 20px;
+            margin: 20px auto;
             border: 2px solid #ddd;
             border-radius: 10px;
             overflow: hidden;
@@ -59,29 +59,15 @@
             background: rgba(0, 0, 0, 0.5);
         }
 
-        .overlay.square::before {
+        .overlay.rectangle::before {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
             width: 200px;
-            height: 200px;
+            height: 150px;
             background: transparent;
             border: 3px dashed white;
-            transform: translate(-50%, -50%);
-            z-index: 2;
-        }
-
-        .overlay.oval::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 200px;
-            height: 250px;
-            background: transparent;
-            border: 3px dashed white;
-            border-radius: 50%;
             transform: translate(-50%, -50%);
             z-index: 2;
         }
@@ -115,6 +101,25 @@
         button:hover {
             background: linear-gradient(135deg, #2575fc, #6a11cb);
         }
+
+        select {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            cursor: pointer;
+            appearance: none;
+            outline: none;
+        }
+
+        select:hover {
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
     </style>
 </head>
 
@@ -132,7 +137,6 @@
         </div>
         <canvas id="snapshot"></canvas>
         <div class="controls">
-            <button type="button" id="startCamera">Abrir Câmera</button>
             <button type="button" id="capture">Capturar Foto</button>
             <button type="submit">Enviar</button>
         </div>
@@ -142,7 +146,6 @@
         const video = document.getElementById('camera');
         const canvas = document.getElementById('snapshot');
         const photoTypeSelect = document.getElementById('photoType');
-        const startCameraButton = document.getElementById('startCamera');
         const captureButton = document.getElementById('capture');
         const photoForm = document.getElementById('photoForm');
         const overlay = document.getElementById('overlay');
@@ -169,21 +172,28 @@
 
         // Alterar o overlay com base no tipo de foto
         function updateOverlay(type) {
-            overlay.classList.remove('square', 'oval');
-            if (type === 'selfie') {
-                overlay.classList.add('oval');
-            } else {
-                overlay.classList.add('square');
-            }
+            overlay.classList.remove('rectangle');
+            overlay.classList.add('rectangle'); // Sempre retangular
         }
 
-        // Abrir a câmera com base no tipo de foto selecionado
-        startCameraButton.addEventListener('click', () => {
+        // Atualizar a câmera e overlay ao mudar o tipo de foto
+        photoTypeSelect.addEventListener('change', () => {
             const photoType = photoTypeSelect.value;
             if (photoType === 'selfie') {
                 startCamera('user'); // Câmera frontal
             } else {
                 startCamera('environment'); // Câmera traseira
+            }
+            updateOverlay(photoType);
+        });
+
+        // Iniciar a câmera automaticamente ao carregar a página
+        window.addEventListener('load', () => {
+            const photoType = photoTypeSelect.value;
+            if (photoType === 'selfie') {
+                startCamera('user');
+            } else {
+                startCamera('environment');
             }
             updateOverlay(photoType);
         });
