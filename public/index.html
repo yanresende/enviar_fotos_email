@@ -60,11 +60,17 @@
             });
         }
 
+        let currentStream = null;
+
         async function startCamera(facingMode = 'environment') {
             const video = document.getElementById('camera');
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
                 video.srcObject = stream;
+                currentStream = stream;
             } catch (err) {
                 console.error('Erro ao acessar a câmera: ', err);
                 alert('Erro ao acessar a câmera: ' + err.message + ' (' + err.name + ')');
@@ -131,6 +137,17 @@
             } catch (error) {
                 alert('Erro ao enviar as fotos.');
             }
+        });
+
+        // Iniciar a câmera automaticamente ao carregar a página
+        window.addEventListener('load', () => {
+            const photoType = photoTypeSelect.value;
+            if (photoType === 'selfie') {
+                startCamera('user');
+            } else {
+                startCamera('environment');
+            }
+            updateOverlay(photoType);
         });
     </script>
 </body>
