@@ -172,33 +172,35 @@
 
         const photoOptions = {
             CNH: [
-                { key: 'identityFront', title: 'CNH (Frente)' },
-                { key: 'selfie', title: 'Selfie' }
+                { key: 'identityFront', title: 'CNH (Frente)', facingMode: 'environment' },
+                { key: 'selfie', title: 'Selfie', facingMode: 'user' }
             ],
             RG: [
-                { key: 'identityFront', title: 'RG (Frente)' },
-                { key: 'identityBack', title: 'RG (Verso)' },
-                { key: 'selfie', title: 'Selfie' }
+                { key: 'identityFront', title: 'RG (Frente)', facingMode: 'environment' },
+                { key: 'identityBack', title: 'RG (Verso)', facingMode: 'environment' },
+                { key: 'selfie', title: 'Selfie', facingMode: 'user' }
             ]
         };
 
         let currentPhotoIndex = 0;
         let currentPhotoList = [];
 
-        function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    camera.srcObject = stream;
-                })
-                .catch(err => {
-                    alert('Erro ao acessar a câmera: ' + err.message);
+        async function startCamera(facingMode) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode }
                 });
+                camera.srcObject = stream;
+            } catch (err) {
+                alert('Erro ao acessar a câmera: ' + err.message);
+            }
         }
 
         function updatePhotoTitle() {
             if (currentPhotoIndex < currentPhotoList.length) {
                 const currentPhoto = currentPhotoList[currentPhotoIndex];
                 photoTitle.textContent = `Tire uma foto de: ${currentPhoto.title}`;
+                startCamera(currentPhoto.facingMode);
             }
         }
 
@@ -229,7 +231,6 @@
             currentPhotoIndex = 0;
 
             updatePhotoTitle();
-            startCamera();
         }
 
         chooseCNH.addEventListener('click', () => initializeForm('CNH'));
