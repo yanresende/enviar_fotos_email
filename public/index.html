@@ -17,6 +17,38 @@
             background: linear-gradient(135deg, #6a11cb, #2575fc);
         }
 
+        #documentStep {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            text-align: center;
+        }
+
+        #documentStep h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        #documentStep button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        #documentStep button:hover {
+            background: linear-gradient(135deg, #2575fc, #6a11cb);
+        }
+
         form {
             background: white;
             padding: 30px;
@@ -124,12 +156,16 @@
 </head>
 
 <body>
-    <form id="photoForm" enctype="multipart/form-data">
+    <div id="documentStep">
+        <h1>Selecione o tipo de documento</h1>
+        <button type="button" id="chooseCNH">CNH</button>
+        <button type="button" id="chooseRG">RG</button>
+    </div>
+
+    <form id="photoForm" enctype="multipart/form-data" style="display: none;">
         <h1>Envie suas fotos</h1>
         <select id="photoType" name="photoType">
-            <option value="identityFront">Identidade (Frente)</option>
-            <option value="identityBack">Identidade (Verso)</option>
-            <option value="selfie">Selfie</option>
+            <!-- Opções geradas dinamicamente -->
         </select>
         <div class="camera-container">
             <video id="camera" autoplay></video>
@@ -143,106 +179,94 @@
     </form>
 
     <script>
-        const video = document.getElementById('camera');
-        const canvas = document.getElementById('snapshot');
-        const photoTypeSelect = document.getElementById('photoType');
-        const captureButton = document.getElementById('capture');
+        const documentStep = document.getElementById('documentStep');
+        const chooseCNH = document.getElementById('chooseCNH');
+        const chooseRG = document.getElementById('chooseRG');
         const photoForm = document.getElementById('photoForm');
-        const overlay = document.getElementById('overlay');
-        const context = canvas.getContext('2d');
+        const photoTypeSelect = document.getElementById('photoType');
 
-        let currentStream = null;
-        const photos = {}; // Armazena as fotos capturadas
+        const photoOptions = {
+            CNH: [
+                { value: 'identityFront', text: 'CNH (Frente)' },
+                { value: 'selfie', text: 'Selfie' }
+            ],
+            RG: [
+                { value: 'identityFront', text: 'RG (Frente)' },
+                { value: 'identityBack', text: 'RG (Verso)' },
+                { value: 'selfie', text: 'Selfie' }
+            ]
+        };
 
-        // Função para acessar a câmera
+        function updatePhotoOptions(options) {
+            photoTypeSelect.innerHTML = '';
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option.value;
+                opt.textContent = option.text;
+                photoTypeSelect.appendChild(opt);
+            });
+        }
+
         async function startCamera(facingMode = 'environment') {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
+            const video = document.getElementById('camera');
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode }
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
                 video.srcObject = stream;
-                currentStream = stream;
             } catch (err) {
                 alert('Erro ao acessar a câmera: ' + err.message);
             }
         }
 
-        // Alterar o overlay com base no tipo de foto
         function updateOverlay(type) {
+            const overlay = document.getElementById('overlay');
             overlay.classList.remove('rectangle');
-            overlay.classList.add('rectangle'); // Sempre retangular
+            overlay.classList.add('rectangle');
         }
 
-        // Atualizar a câmera e overlay ao mudar o tipo de foto
-        photoTypeSelect.addEventListener('change', () => {
-            const photoType = photoTypeSelect.value;
-            if (photoType === 'selfie') {
-                startCamera('user'); // Câmera frontal
-            } else {
-                startCamera('environment'); // Câmera traseira
-            }
-            updateOverlay(photoType);
+        chooseCNH.addEventListener('click', () => {
+            documentStep.style.display = 'none';
+            photoForm.style.display = 'block';
+            updatePhotoOptions(photoOptions.CNH);
+            startCamera('environment');
+            updateOverlay(photoTypeSelect.value);
         });
 
-        // Iniciar a câmera automaticamente ao carregar a página
-        window.addEventListener('load', () => {
-            const photoType = photoTypeSelect.value;
-            if (photoType === 'selfie') {
-                startCamera('user');
-            } else {
-                startCamera('environment');
-            }
-            updateOverlay(photoType);
+        chooseRG.addEventListener('click', () => {
+            documentStep.style.display = 'none';
+            photoForm.style.display = 'block';
+            updatePhotoOptions(photoOptions.RG);
+            startCamera('environment');
+            updateOverlay(photoTypeSelect.value);
         });
 
-        // Capturar a foto
+        const captureButton = document.getElementById('capture');
+        const canvas = document.getElementById('snapshot');
+        const context = canvas.getContext('2d');
+        const photos = {};
+
         captureButton.addEventListener('click', () => {
-            const container = document.querySelector('.camera-container');
-            const rect = container.getBoundingClientRect();
-
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-
-            // Capturar a imagem
-            context.clearRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(video, 0, 0, rect.width, rect.height);
-
-            // Adicionar ao armazenamento de fotos
+            const video = document.getElementById('camera');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const image = canvas.toDataURL('image/png');
             const photoType = photoTypeSelect.value;
             photos[photoType] = image;
-
-            alert(`${photoType === 'selfie' ? 'Selfie' : 'Foto da identidade'} capturada com sucesso!`);
+            alert(`Foto ${photoType} capturada com sucesso!`);
         });
 
-        // Enviar as fotos
         photoForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-
             const formData = new FormData();
-            // Convertendo as imagens em Blob
-            for (const type of Object.keys(photos)) {
+            for (const type in photos) {
                 const imageBlob = await fetch(photos[type]).then(res => res.blob());
-                // Nomeando de acordo com o tipo de foto esperado no backend
-                formData.append(type === 'selfie' ? 'selfiePhoto' : type === 'identityFront' ? 'frontPhoto' : 'backPhoto', imageBlob, `${type}.png`);
+                formData.append(type, imageBlob, `${type}.png`);
             }
-
             try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                if (response.ok) {
-                    alert('Fotos enviadas com sucesso!');
-                } else {
-                    alert('Erro ao enviar as fotos. Tente novamente.');
-                }
+                const response = await fetch('/upload', { method: 'POST', body: formData });
+                alert(response.ok ? 'Fotos enviadas com sucesso!' : 'Erro ao enviar as fotos.');
             } catch (error) {
-                alert('Erro ao enviar as fotos. Verifique sua conexão e tente novamente.');
+                alert('Erro ao enviar as fotos.');
             }
         });
     </script>
