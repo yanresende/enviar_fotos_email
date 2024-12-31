@@ -92,6 +92,15 @@
             updateOverlay(photoTypeSelect.value);
         });
 
+        photoTypeSelect.addEventListener('change', () => {
+            const selectedOption = photoTypeSelect.value;
+            if (selectedOption === 'selfie') {
+                startCamera('user');
+            } else {
+                startCamera('environment');
+            }
+        });
+
         const captureButton = document.getElementById('capture');
         const canvas = document.getElementById('snapshot');
         const context = canvas.getContext('2d');
