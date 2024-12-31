@@ -66,7 +66,8 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
                 video.srcObject = stream;
             } catch (err) {
-                alert('Erro ao acessar a câmera: ' + err.message);
+                console.error('Erro ao acessar a câmera: ', err);
+                alert('Erro ao acessar a câmera: ' + err.message + ' (' + err.name + ')');
             }
         }
 
