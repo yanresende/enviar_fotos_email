@@ -133,25 +133,6 @@
         button:hover {
             background: linear-gradient(135deg, #2575fc, #6a11cb);
         }
-
-        select {
-            width: 100%;
-            max-width: 300px;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            background: linear-gradient(135deg, #6a11cb, #2575fc);
-            color: white;
-            font-size: 1rem;
-            margin-bottom: 20px;
-            cursor: pointer;
-            appearance: none;
-            outline: none;
-        }
-
-        select:hover {
-            background: linear-gradient(135deg, #2575fc, #6a11cb);
-        }
     </style>
 </head>
 
@@ -163,10 +144,7 @@
     </div>
 
     <form id="photoForm" enctype="multipart/form-data" style="display: none;">
-        <h1>Envie suas fotos</h1>
-        <select id="photoType" name="photoType">
-            <!-- Opções geradas dinamicamente -->
-        </select>
+        <h1 id="photoTitle">Envie suas fotos</h1>
         <div class="camera-container">
             <video id="camera" autoplay></video>
             <div id="overlay"></div>
@@ -183,90 +161,104 @@
         const chooseCNH = document.getElementById('chooseCNH');
         const chooseRG = document.getElementById('chooseRG');
         const photoForm = document.getElementById('photoForm');
-        const photoTypeSelect = document.getElementById('photoType');
+        const photoTitle = document.getElementById('photoTitle');
 
-        const photoOptions = {
-            CNH: [
-                { value: 'identityFront', text: 'CNH (Frente)' },
-                { value: 'selfie', text: 'Selfie' }
-            ],
-            RG: [
-                { value: 'identityFront', text: 'RG (Frente)' },
-                { value: 'identityBack', text: 'RG (Verso)' },
-                { value: 'selfie', text: 'Selfie' }
-            ]
-        };
-
-        function updatePhotoOptions(options) {
-            photoTypeSelect.innerHTML = '';
-            options.forEach(option => {
-                const opt = document.createElement('option');
-                opt.value = option.value;
-                opt.textContent = option.text;
-                photoTypeSelect.appendChild(opt);
-            });
-        }
-
-        async function startCamera(facingMode = 'environment') {
-            const video = document.getElementById('camera');
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
-                video.srcObject = stream;
-            } catch (err) {
-                alert('Erro ao acessar a câmera: ' + err.message);
-            }
-        }
-
-        function updateOverlay(type) {
-            const overlay = document.getElementById('overlay');
-            overlay.classList.remove('rectangle');
-            overlay.classList.add('rectangle');
-        }
-
-        chooseCNH.addEventListener('click', () => {
-            documentStep.style.display = 'none';
-            photoForm.style.display = 'block';
-            updatePhotoOptions(photoOptions.CNH);
-            startCamera('environment');
-            updateOverlay(photoTypeSelect.value);
-        });
-
-        chooseRG.addEventListener('click', () => {
-            documentStep.style.display = 'none';
-            photoForm.style.display = 'block';
-            updatePhotoOptions(photoOptions.RG);
-            startCamera('environment');
-            updateOverlay(photoTypeSelect.value);
-        });
-
+        const camera = document.getElementById('camera');
         const captureButton = document.getElementById('capture');
         const canvas = document.getElementById('snapshot');
         const context = canvas.getContext('2d');
+
         const photos = {};
 
-        captureButton.addEventListener('click', () => {
-            const video = document.getElementById('camera');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const photoOptions = {
+            CNH: [
+                { key: 'identityFront', title: 'CNH (Frente)' },
+                { key: 'selfie', title: 'Selfie' }
+            ],
+            RG: [
+                { key: 'identityFront', title: 'RG (Frente)' },
+                { key: 'identityBack', title: 'RG (Verso)' },
+                { key: 'selfie', title: 'Selfie' }
+            ]
+        };
+
+        let currentPhotoIndex = 0;
+        let currentPhotoList = [];
+
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    camera.srcObject = stream;
+                })
+                .catch(err => {
+                    alert('Erro ao acessar a câmera: ' + err.message);
+                });
+        }
+
+        function updatePhotoTitle() {
+            if (currentPhotoIndex < currentPhotoList.length) {
+                const currentPhoto = currentPhotoList[currentPhotoIndex];
+                photoTitle.textContent = `Tire uma foto de: ${currentPhoto.title}`;
+            }
+        }
+
+        function capturePhoto() {
+            canvas.width = camera.videoWidth;
+            canvas.height = camera.videoHeight;
+            context.drawImage(camera, 0, 0, canvas.width, canvas.height);
+
             const image = canvas.toDataURL('image/png');
-            const photoType = photoTypeSelect.value;
-            photos[photoType] = image;
-            alert(`Foto ${photoType} capturada com sucesso!`);
-        });
+            const currentPhoto = currentPhotoList[currentPhotoIndex];
+            photos[currentPhoto.key] = image;
+
+            alert(`${currentPhoto.title} capturada com sucesso!`);
+
+            currentPhotoIndex++;
+            if (currentPhotoIndex < currentPhotoList.length) {
+                updatePhotoTitle();
+            } else {
+                alert('Todas as fotos foram capturadas. Agora você pode enviar.');
+            }
+        }
+
+        function initializeForm(selectedOption) {
+            documentStep.style.display = 'none';
+            photoForm.style.display = 'block';
+
+            currentPhotoList = photoOptions[selectedOption];
+            currentPhotoIndex = 0;
+
+            updatePhotoTitle();
+            startCamera();
+        }
+
+        chooseCNH.addEventListener('click', () => initializeForm('CNH'));
+        chooseRG.addEventListener('click', () => initializeForm('RG'));
+
+        captureButton.addEventListener('click', capturePhoto);
 
         photoForm.addEventListener('submit', async function (e) {
             e.preventDefault();
+
             const formData = new FormData();
-            for (const type in photos) {
-                const imageBlob = await fetch(photos[type]).then(res => res.blob());
-                formData.append(type, imageBlob, `${type}.png`);
+            for (const key in photos) {
+                const imageBlob = await fetch(photos[key]).then(res => res.blob());
+                formData.append(key, imageBlob, `${key}.png`);
             }
+
             try {
-                const response = await fetch('/upload', { method: 'POST', body: formData });
-                alert(response.ok ? 'Fotos enviadas com sucesso!' : 'Erro ao enviar as fotos.');
-            } catch (error) {
-                alert('Erro ao enviar as fotos.');
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert('Fotos enviadas com sucesso!');
+                } else {
+                    alert('Erro ao enviar as fotos.');
+                }
+            } catch (err) {
+                alert('Erro ao enviar as fotos: ' + err.message);
             }
         });
     </script>
