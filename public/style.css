@@ -15,7 +15,6 @@ body {
     align-items: center;
     justify-content: center;
     height: 100vh;
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
     color: white;
     text-align: center;
 }
@@ -37,25 +36,13 @@ body {
     transition: background 0.3s ease;
 }
 
-#documentStep button:hover {
-    background: linear-gradient(135deg, #2575fc, #6a11cb);
-}
-
 form {
     background: white;
     padding: 30px;
     border-radius: 10px;
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     width: 100%;
     max-width: 400px;
     text-align: center;
-
-}
-
-h1 {
-    margin-bottom: 20px;
-    font-size: 1.8rem;
-    color: #333;
 }
 
 .camera-container {
@@ -81,26 +68,7 @@ video {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-}
-
-.overlay.oval::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 150px;
-    /* Ajuste a largura do oval */
-    height: 200px;
-    /* Ajuste a altura do oval */
-    border: 3px dashed white;
-    /* Estilo do contorno */
-    border-radius: 50%;
-    /* Torna o contorno oval */
-    transform: translate(-50%, -50%);
-    z-index: 2;
-    /* Garante que fique acima do vídeo */
-    background: transparent;
+    pointer-events: none;
 }
 
 .overlay.rectangle::before {
@@ -116,52 +84,16 @@ video {
     z-index: 2;
 }
 
-canvas {
-    display: none;
-    margin: 10px auto;
-    border: 2px solid #ddd;
-    border-radius: 5px;
-    width: 100%;
-    max-width: 300px;
-    height: auto;
+.overlay.oval::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150px;
+    height: 200px;
+    border: 3px dashed white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    background: transparent;
 }
-
-.controls {
-    margin-top: 20px;
-}
-
-button {
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
-    color: white;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background 0.3s ease;
-    margin: 5px;
-}
-
-button:hover {
-    background: linear-gradient(135deg, #2575fc, #6a11cb);
-}
-
-select {
-    width: 100%;
-    max-width: 300px;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
-    color: white;
-    font-size: 1rem;
-    margin-bottom: 20px;
-    cursor: pointer;
-    appearance: none;
-    outline: none;
-}
-
-select:hover {
-    background: linear-gradient(135deg, #2575fc, #6a11cb);
-}
-
