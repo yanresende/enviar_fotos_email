@@ -47,8 +47,8 @@ async function startCamera(facingMode = "environment") {
 
 function updateOverlay(type) {
   const overlay = document.getElementById("overlay");
-  overlay.classList.remove("rectangle", "oval");
-  overlay.classList.add(type === "selfie" ? "oval" : "rectangle");
+  overlay.classList.remove("rectangle");
+  overlay.classList.add("rectangle");
 }
 
 chooseCNH.addEventListener("click", () => {
@@ -74,7 +74,6 @@ photoTypeSelect.addEventListener("change", () => {
   } else {
     startCamera("environment");
   }
-  updateOverlay(selectedOption);
 });
 
 const captureButton = document.getElementById("capture");
@@ -98,7 +97,7 @@ photoForm.addEventListener("submit", async function (e) {
   const formData = new FormData();
   for (const type in photos) {
     const imageBlob = await fetch(photos[type]).then((res) => res.blob());
-    formData.append(type, imageBlob, `${type}.png`);
+    formData.append(type, imageBlob, type + ".png");
   }
   try {
     const response = await fetch("/upload", { method: "POST", body: formData });
@@ -108,4 +107,14 @@ photoForm.addEventListener("submit", async function (e) {
   } catch (error) {
     alert("Erro ao enviar as fotos.");
   }
+});
+
+window.addEventListener("load", () => {
+  const photoType = photoTypeSelect.value;
+  if (photoType === "selfie") {
+    startCamera("user");
+  } else {
+    startCamera("environment");
+  }
+  updateOverlay(photoType);
 });
