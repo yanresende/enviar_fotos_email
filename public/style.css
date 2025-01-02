@@ -90,15 +90,16 @@ video {
     top: 50%;
     left: 50%;
     width: 150px;
-    /* Largura do oval */
+    /* Ajuste a largura do oval */
     height: 200px;
-    /* Altura do oval */
+    /* Ajuste a altura do oval */
     border: 3px dashed white;
-    /* Contorno do oval */
+    /* Estilo do contorno */
     border-radius: 50%;
-    /* Faz o contorno ser oval */
+    /* Torna o contorno oval */
     transform: translate(-50%, -50%);
     z-index: 2;
+    /* Garante que fique acima do vídeo */
     background: transparent;
 }
 

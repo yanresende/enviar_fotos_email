@@ -22,7 +22,7 @@
         </select>
         <div class="camera-container">
             <video id="camera" autoplay></video>
-            <div id="overlay"></div>
+            <div id="overlay" class="overlay"></div>
         </div>
         <canvas id="snapshot"></canvas>
         <div class="controls">
@@ -79,13 +79,14 @@
 
         function updateOverlay(type) {
                 const overlay = document.getElementById('overlay');
-                overlay.classList.remove('rectangle', 'oval'); // Remova todas as classes previamente aplicadas
+                overlay.className = ''; // Remove todas as classes existentes
                 if (type === 'selfie') {
-                    overlay.classList.add('oval'); // Adicione o contorno oval para selfies
+                    overlay.classList.add('overlay', 'oval'); // Adiciona a classe para contorno oval
                 } else {
-                    overlay.classList.add('rectangle'); // Use o retângulo para outros tipos de fotos
+                    overlay.classList.add('overlay', 'rectangle'); // Adiciona a classe para contorno retangular
                 }
             }
+
 
         chooseCNH.addEventListener('click', () => {
             documentStep.style.display = 'none';
@@ -110,8 +111,9 @@
                 } else {
                     startCamera('environment');
                 }
-                updateOverlay(selectedOption); // Atualize o contorno de acordo com o tipo selecionado
+                updateOverlay(selectedOption); // Atualiza o contorno
             });
+
 
         const captureButton = document.getElementById('capture');
         const canvas = document.getElementById('snapshot');
