@@ -1,3 +1,0 @@
-const EMAIL = "saresende5555@gmail.com"; // Substitua pelo e-mail de envio
-const PASSWORD = "nlaa nylc ddic dhmy"
-saresende555@gmail.com
