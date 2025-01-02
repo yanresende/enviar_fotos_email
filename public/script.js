@@ -126,13 +126,3 @@ photoForm.addEventListener("submit", async function (e) {
     alert("Erro ao enviar as fotos.");
   }
 });
-
-window.addEventListener("load", () => {
-  const photoType = photoTypeSelect.value;
-  if (photoType === "selfie") {
-    startCamera("user");
-  } else {
-    startCamera("environment");
-  }
-  updateOverlay(photoType);
-});
