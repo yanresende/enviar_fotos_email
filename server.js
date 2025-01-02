@@ -3,6 +3,7 @@ const chooseCNH = document.getElementById("chooseCNH");
 const chooseRG = document.getElementById("chooseRG");
 const photoForm = document.getElementById("photoForm");
 const photoTypeSelect = document.getElementById("photoType");
+
 const captureButton = document.getElementById("capture");
 const canvas = document.getElementById("snapshot");
 const context = canvas.getContext("2d");
@@ -32,6 +33,18 @@ function updatePhotoOptions(options) {
   });
 }
 
+function updatePhotoOptions(options) {
+  console.log("Atualizando opções de foto:", options); // LOG
+  photoTypeSelect.innerHTML = "";
+  options.forEach((option) => {
+    const opt = document.createElement("option");
+    opt.value = option.value;
+    opt.textContent = option.text;
+    photoTypeSelect.appendChild(opt);
+  });
+}
+
+// Iniciar câmera
 async function startCamera(facingMode = "environment") {
   const video = document.getElementById("camera");
   if (currentStream) {
@@ -44,12 +57,14 @@ async function startCamera(facingMode = "environment") {
     video.srcObject = stream;
     currentStream = stream;
   } catch (err) {
-    console.error("Erro ao acessar a câmera: ", err);
+    console.error("Erro ao acessar a câmera:", err); // LOG
     alert("Erro ao acessar a câmera: " + err.message + " (" + err.name + ")");
   }
 }
 
+// Atualizar o contorno da sobreposição
 function updateOverlay(type) {
+  console.log("Atualizando sobreposição para:", type); // LOG
   const overlay = document.getElementById("overlay");
   overlay.className = ""; // Remove todas as classes existentes
   if (type === "selfie") {
@@ -59,7 +74,9 @@ function updateOverlay(type) {
   }
 }
 
+// Eventos ao clicar nos botões CNH e RG
 chooseCNH.addEventListener("click", () => {
+  console.log("Botão CNH clicado"); // LOG
   documentStep.style.display = "none";
   photoForm.style.display = "block";
   updatePhotoOptions(photoOptions.CNH);
@@ -68,6 +85,7 @@ chooseCNH.addEventListener("click", () => {
 });
 
 chooseRG.addEventListener("click", () => {
+  console.log("Botão RG clicado"); // LOG
   documentStep.style.display = "none";
   photoForm.style.display = "block";
   updatePhotoOptions(photoOptions.RG);
@@ -75,8 +93,10 @@ chooseRG.addEventListener("click", () => {
   updateOverlay(photoTypeSelect.value);
 });
 
+// Alterar câmera com base no tipo de foto selecionado
 photoTypeSelect.addEventListener("change", () => {
   const selectedOption = photoTypeSelect.value;
+  console.log("Tipo de foto selecionado:", selectedOption); // LOG
   if (selectedOption === "selfie") {
     startCamera("user");
   } else {
