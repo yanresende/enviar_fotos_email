@@ -3,12 +3,13 @@ const multer = require("multer");
 const nodemailer = require("nodemailer");
 const fs = require("fs");
 const path = require("path");
+require("dotenv").config(); // Carrega variáveis de ambiente do .env
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
-const EMAIL = "saresende5555@gmail.com"; 
-const PASSWORD = "nlaa nylc ddic dhmy";
+const EMAIL = process.env.EMAIL;
+const PASSWORD = process.env.PASSWORD;
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -31,6 +32,7 @@ app.post(
     try {
       const { frontPhoto, backPhoto, selfiePhoto } = req.files;
 
+      // Verifica se todos os arquivos necessários foram enviados
       if (!frontPhoto || !backPhoto || !selfiePhoto) {
         return res.status(400).send("Todas as fotos são obrigatórias.");
       }
@@ -52,21 +54,32 @@ app.post(
 
       const mailOptions = {
         from: EMAIL,
-        to: "saresende555@gmail.com",
+        to: "saresende555@gmail.com", // Destinatário
         subject: "Novas fotos enviadas",
         text: "As fotos foram enviadas com sucesso!",
         attachments,
       };
 
+      // Tenta enviar o e-mail
       await transporter.sendMail(mailOptions);
 
-      
+      // Remove os arquivos enviados após o sucesso
       attachments.forEach((file) => fs.unlinkSync(file.path));
 
       res.send("Fotos enviadas com sucesso!");
     } catch (error) {
       console.error("Erro ao processar o upload:", error);
-      res.status(500).send("Erro ao enviar as fotos.");
+
+      // Tratamento de erros no envio de e-mail
+      if (error.response) {
+        console.error("Erro no servidor de e-mail:", error.response);
+      } else {
+        console.error("Erro genérico:", error.message);
+      }
+
+      res
+        .status(500)
+        .send("Erro ao enviar as fotos. Tente novamente mais tarde.");
     }
   }
 );
