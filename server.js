@@ -34,7 +34,7 @@ app.post(
 
       const mailOptions = {
         from: process.env.EMAIL, // Usa variável de ambiente
-        to: "destinatario@example.com",
+        to: "saresende555@gmail.com",
         subject: "Fotos enviadas",
         text: "As fotos foram enviadas com sucesso.",
         attachments: Object.values(files)
