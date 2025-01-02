@@ -1,90 +1,68 @@
 const express = require("express");
 const multer = require("multer");
 const nodemailer = require("nodemailer");
-const fs = require("fs");
 const path = require("path");
-require("dotenv").config(); // Carrega variáveis de ambiente do .env
+const { unlink } = require("fs");
+require("dotenv").config(); // Adiciona o pacote dotenv
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
-
-const EMAIL = process.env.EMAIL;
-const PASSWORD = process.env.PASSWORD;
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: EMAIL,
-    pass: PASSWORD,
-  },
-});
 
 app.use(express.static("public"));
 
 app.post(
   "/upload",
   upload.fields([
-    { name: "frontPhoto", maxCount: 1 },
-    { name: "backPhoto", maxCount: 1 },
-    { name: "selfiePhoto", maxCount: 1 },
+    { name: "identityFront", maxCount: 1 },
+    { name: "identityBack", maxCount: 1 },
+    { name: "selfie", maxCount: 1 },
   ]),
   async (req, res) => {
     try {
-      const { frontPhoto, backPhoto, selfiePhoto } = req.files;
-
-      // Verifica se todos os arquivos necessários foram enviados
-      if (!frontPhoto || !backPhoto || !selfiePhoto) {
-        return res.status(400).send("Todas as fotos são obrigatórias.");
+      const { files } = req;
+      if (!files) {
+        return res.status(400).send("Nenhuma foto foi enviada.");
       }
 
-      const attachments = [
-        {
-          filename: frontPhoto[0].originalname,
-          path: frontPhoto[0].path,
+      const transporter = nodemailer.createTransport({
+        service: "Gmail",
+        auth: {
+          user: process.env.EMAIL, // Usa variável de ambiente
+          pass: process.env.PASSWORD, // Usa variável de ambiente
         },
-        {
-          filename: backPhoto[0].originalname,
-          path: backPhoto[0].path,
-        },
-        {
-          filename: selfiePhoto[0].originalname,
-          path: selfiePhoto[0].path,
-        },
-      ];
+      });
 
       const mailOptions = {
-        from: EMAIL,
-        to: "saresende555@gmail.com", // Destinatário
-        subject: "Novas fotos enviadas",
-        text: "As fotos foram enviadas com sucesso!",
-        attachments,
+        from: process.env.EMAIL, // Usa variável de ambiente
+        to: "destinatario@example.com",
+        subject: "Fotos enviadas",
+        text: "As fotos foram enviadas com sucesso.",
+        attachments: Object.values(files)
+          .flat()
+          .map((file) => ({
+            filename: file.originalname,
+            path: file.path,
+          })),
       };
 
-      // Tenta enviar o e-mail
       await transporter.sendMail(mailOptions);
-
-      // Remove os arquivos enviados após o sucesso
-      attachments.forEach((file) => fs.unlinkSync(file.path));
-
       res.send("Fotos enviadas com sucesso!");
+
+      Object.values(files)
+        .flat()
+        .forEach((file) => {
+          unlink(file.path, (err) => {
+            if (err) console.error(`Erro ao deletar o arquivo: ${file.path}`);
+          });
+        });
     } catch (error) {
-      console.error("Erro ao processar o upload:", error);
-
-      // Tratamento de erros no envio de e-mail
-      if (error.response) {
-        console.error("Erro no servidor de e-mail:", error.response);
-      } else {
-        console.error("Erro genérico:", error.message);
-      }
-
-      res
-        .status(500)
-        .send("Erro ao enviar as fotos. Tente novamente mais tarde.");
+      console.error("Erro ao enviar o email:", error);
+      res.status(500).send("Erro ao enviar o email.");
     }
   }
 );
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
