@@ -47,8 +47,12 @@ async function startCamera(facingMode = "environment") {
 
 function updateOverlay(type) {
   const overlay = document.getElementById("overlay");
-  overlay.classList.remove("rectangle");
-  overlay.classList.add("rectangle");
+  overlay.classList.remove("rectangle", "oval");
+  if (type === "selfie") {
+    overlay.classList.add("oval");
+  } else {
+    overlay.classList.add("rectangle");
+  }
 }
 
 chooseCNH.addEventListener("click", () => {
@@ -71,10 +75,24 @@ photoTypeSelect.addEventListener("change", () => {
   const selectedOption = photoTypeSelect.value;
   if (selectedOption === "selfie") {
     startCamera("user");
+    updateOverlay("selfie");
   } else {
     startCamera("environment");
+    updateOverlay("other");
   }
 });
+
+window.addEventListener("load", () => {
+  const photoType = photoTypeSelect.value;
+  if (photoType === "selfie") {
+    startCamera("user");
+    updateOverlay("selfie");
+  } else {
+    startCamera("environment");
+    updateOverlay("other");
+  }
+});
+
 
 const captureButton = document.getElementById("capture");
 const canvas = document.getElementById("snapshot");
