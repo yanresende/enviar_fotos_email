@@ -5,12 +5,11 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-const upload = multer({ dest: "uploads/" }); // Pasta temporária para upload
+const upload = multer({ dest: "uploads/" });
 
-const EMAIL = "saresende5555@gmail.com"; // Substitua pelo e-mail de envio
+const EMAIL = "saresende5555@gmail.com"; 
 const PASSWORD = "nlaa nylc ddic dhmy";
 
-// Configuração do Nodemailer
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -19,9 +18,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-app.use(express.static("public")); // Servir arquivos estáticos da pasta "public"
+app.use(express.static("public"));
 
-// Rota para upload
 app.post(
   "/upload",
   upload.fields([
@@ -37,7 +35,6 @@ app.post(
         return res.status(400).send("Todas as fotos são obrigatórias.");
       }
 
-      // Criar os anexos
       const attachments = [
         {
           filename: frontPhoto[0].originalname,
@@ -53,19 +50,17 @@ app.post(
         },
       ];
 
-      // Configuração do e-mail
       const mailOptions = {
         from: EMAIL,
-        to: "saresende555@gmail.com", // Substituir pelo destinatário real
+        to: "saresende555@gmail.com",
         subject: "Novas fotos enviadas",
         text: "As fotos foram enviadas com sucesso!",
         attachments,
       };
 
-      // Enviar o e-mail
       await transporter.sendMail(mailOptions);
 
-      // Remover os arquivos temporários após envio
+      
       attachments.forEach((file) => fs.unlinkSync(file.path));
 
       res.send("Fotos enviadas com sucesso!");
@@ -76,7 +71,6 @@ app.post(
   }
 );
 
-// Inicializar o servidor
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);

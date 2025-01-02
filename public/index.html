@@ -18,7 +18,7 @@
     <form id="photoForm" enctype="multipart/form-data" style="display: none;">
         <h1>Envie suas fotos</h1>
         <select id="photoType" name="photoType">
-            <!-- Opções geradas dinamicamente -->
+            
         </select>
         <div class="camera-container">
             <video id="camera" autoplay></video>
@@ -78,10 +78,14 @@
         }
 
         function updateOverlay(type) {
-            const overlay = document.getElementById('overlay');
-            overlay.classList.remove('rectangle');
-            overlay.classList.add('rectangle');
-        }
+                const overlay = document.getElementById('overlay');
+                overlay.classList.remove('rectangle', 'oval'); // Remova todas as classes previamente aplicadas
+                if (type === 'selfie') {
+                    overlay.classList.add('oval'); // Adicione o contorno oval para selfies
+                } else {
+                    overlay.classList.add('rectangle'); // Use o retângulo para outros tipos de fotos
+                }
+            }
 
         chooseCNH.addEventListener('click', () => {
             documentStep.style.display = 'none';
@@ -100,13 +104,14 @@
         });
 
         photoTypeSelect.addEventListener('change', () => {
-            const selectedOption = photoTypeSelect.value;
-            if (selectedOption === 'selfie') {
-                startCamera('user');
-            } else {
-                startCamera('environment');
-            }
-        });
+                const selectedOption = photoTypeSelect.value;
+                if (selectedOption === 'selfie') {
+                    startCamera('user');
+                } else {
+                    startCamera('environment');
+                }
+                updateOverlay(selectedOption); // Atualize o contorno de acordo com o tipo selecionado
+            });
 
         const captureButton = document.getElementById('capture');
         const canvas = document.getElementById('snapshot');
@@ -139,7 +144,6 @@
             }
         });
 
-        // Iniciar a câmera automaticamente ao carregar a página
         window.addEventListener('load', () => {
             const photoType = photoTypeSelect.value;
             if (photoType === 'selfie') {
