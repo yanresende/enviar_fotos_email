@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envio Final</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="submitPage">
+        <h1>Envio de Fotos Concluído</h1>
+        <p>Suas fotos foram enviadas com sucesso!</p>
+        <button id="finishButton">Finalizar</button>
+    </div>
+
+    <script>
+        document.getElementById("finishButton").addEventListener("click", () => {
+            alert("Fotos enviadas com sucesso!");
+            window.location.href = "index.html";  // Volta para a página inicial ou exibe uma mensagem de confirmação
+        });
+    </script>
+</body>
+
+</html>

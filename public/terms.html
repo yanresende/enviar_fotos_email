@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termos de Serviço</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="termsPage">
+        <h1>Termos de Serviço</h1>
+        <p>Leia atentamente os termos de serviço abaixo antes de prosseguir.</p>
+        <textarea rows="10" cols="50" readonly>
+            [Aqui vão os termos de serviço...]
+        </textarea>
+        <div class="controls">
+            <button id="acceptButton">Aceitar e Finalizar</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("acceptButton").addEventListener("click", () => {
+            // Após aceitar, redireciona para o envio final das fotos
+            window.location.href = "submit.html";  // Página de envio final (onde as fotos são enviadas)
+        });
+    </script>
+</body>
+
+</html>

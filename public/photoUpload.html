@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envio de Fotos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="documentStep">
+        <h1>Selecione o tipo de documento</h1>
+        <button type="button" id="chooseCNH">CNH</button>
+        <button type="button" id="chooseRG">RG</button>
+    </div>
+
+    <form id="photoForm" enctype="multipart/form-data" style="display: none;">
+        <h1>Envie suas fotos</h1>
+        <select id="photoType" name="photoType"></select>
+        <div class="camera-container">
+            <video id="camera" autoplay></video>
+            <div id="overlay" class="overlay"></div>
+        </div>
+
+        <canvas id="snapshot"></canvas>
+        <div class="controls">
+            <button type="button" id="capture">Capturar Foto</button>
+            <button type="submit" id="submitButton">Enviar</button>
+        </div>
+    </form>
+
+    <div id="photoPreview" style="display: none;">
+        <h2>Pré-visualização</h2>
+        <canvas id="photoCanvas"></canvas>
+        <div class="controls">
+            <button type="button" id="retake">Refazer Foto</button>
+            <button type="button" id="next">Próxima Foto</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
