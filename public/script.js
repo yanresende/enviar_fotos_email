@@ -3,6 +3,12 @@ const chooseCNH = document.getElementById("chooseCNH");
 const chooseRG = document.getElementById("chooseRG");
 const photoForm = document.getElementById("photoForm");
 const photoTypeSelect = document.getElementById("photoType");
+const photoPreview = document.getElementById("photoPreview");
+const photoCanvas = document.getElementById("photoCanvas");
+const photoCanvasContext = photoCanvas.getContext("2d");
+const captureButton = document.getElementById("capture");
+const retakeButton = document.getElementById("retake");
+const nextButton = document.getElementById("next");
 
 const photoOptions = {
   CNH: [
@@ -16,6 +22,10 @@ const photoOptions = {
   ],
 };
 
+let currentStream = null;
+const photos = {};
+
+// Atualiza as opções de tipo de foto
 function updatePhotoOptions(options) {
   photoTypeSelect.innerHTML = "";
   options.forEach((option) => {
@@ -26,8 +36,7 @@ function updatePhotoOptions(options) {
   });
 }
 
-let currentStream = null;
-
+// Inicia a câmera
 async function startCamera(facingMode = "environment") {
   const video = document.getElementById("camera");
   if (currentStream) {
@@ -45,6 +54,7 @@ async function startCamera(facingMode = "environment") {
   }
 }
 
+// Atualiza o overlay da câmera
 function updateOverlay(type) {
   const overlay = document.getElementById("overlay");
   overlay.classList.remove("rectangle", "oval");
@@ -55,6 +65,7 @@ function updateOverlay(type) {
   }
 }
 
+// Captura o clique no botão CNH
 chooseCNH.addEventListener("click", () => {
   documentStep.style.display = "none";
   photoForm.style.display = "block";
@@ -63,6 +74,7 @@ chooseCNH.addEventListener("click", () => {
   updateOverlay(photoTypeSelect.value);
 });
 
+// Captura o clique no botão RG
 chooseRG.addEventListener("click", () => {
   documentStep.style.display = "none";
   photoForm.style.display = "block";
@@ -71,6 +83,7 @@ chooseRG.addEventListener("click", () => {
   updateOverlay(photoTypeSelect.value);
 });
 
+// Atualiza a câmera ao trocar o tipo de foto
 photoTypeSelect.addEventListener("change", () => {
   const selectedOption = photoTypeSelect.value;
   if (selectedOption === "selfie") {
@@ -82,47 +95,36 @@ photoTypeSelect.addEventListener("change", () => {
   }
 });
 
-window.addEventListener("load", () => {
-  const photoType = photoTypeSelect.value;
-  if (photoType === "selfie") {
-    startCamera("user");
-    updateOverlay("selfie");
-  } else {
-    startCamera("environment");
-    updateOverlay("other");
-  }
-});
-
-
-const captureButton = document.getElementById("capture");
-const canvas = document.getElementById("snapshot");
-const context = canvas.getContext("2d");
-const photos = {};
-
+// Captura a foto
 captureButton.addEventListener("click", () => {
   const video = document.getElementById("camera");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  context.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const image = canvas.toDataURL("image/png");
-  const photoType = photoTypeSelect.value;
-  photos[photoType] = image;
-  alert(`Foto ${photoType} capturada com sucesso!`);
+  photoCanvas.width = video.videoWidth;
+  photoCanvas.height = video.videoHeight;
+  photoCanvasContext.drawImage(
+    video,
+    0,
+    0,
+    photoCanvas.width,
+    photoCanvas.height
+  );
+
+  photoPreview.style.display = "block";
+  photoForm.style.display = "none";
 });
 
-photoForm.addEventListener("submit", async function (e) {
-  e.preventDefault();
-  const formData = new FormData();
-  for (const type in photos) {
-    const imageBlob = await fetch(photos[type]).then((res) => res.blob());
-    formData.append(type, imageBlob, type + ".png");
-  }
-  try {
-    const response = await fetch("/upload", { method: "POST", body: formData });
-    alert(
-      response.ok ? "Fotos enviadas com sucesso!" : "Erro ao enviar as fotos."
-    );
-  } catch (error) {
-    alert("Erro ao enviar as fotos.");
-  }
+// Refaz a foto
+retakeButton.addEventListener("click", () => {
+  photoPreview.style.display = "none";
+  photoForm.style.display = "block";
+  startCamera(photoTypeSelect.value === "selfie" ? "user" : "environment");
+});
+
+// Salva a foto e continua
+nextButton.addEventListener("click", () => {
+  const image = photoCanvas.toDataURL("image/png");
+  const photoType = photoTypeSelect.value;
+  photos[photoType] = image;
+  alert(`Foto ${photoType} salva com sucesso!`);
+  photoPreview.style.display = "none";
+  photoForm.style.display = "block";
 });

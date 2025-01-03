@@ -22,13 +22,21 @@
             <video id="camera" autoplay></video>
             <div id="overlay" class="overlay"></div>
         </div>
-
+    
         <canvas id="snapshot"></canvas>
         <div class="controls">
             <button type="button" id="capture">Capturar Foto</button>
-            <button type="submit">Enviar</button>
         </div>
     </form>
+    
+    <div id="photoPreview" style="display: none;">
+        <h2>Pré-visualização</h2>
+        <canvas id="photoCanvas"></canvas>
+        <div class="controls">
+            <button type="button" id="retake">Refazer Foto</button>
+            <button type="button" id="next">Próxima Foto</button>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
