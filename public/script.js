@@ -144,3 +144,9 @@ nextButton.addEventListener("click", () => {
 
   checkAllPhotosCaptured();
 });
+
+// Verifica se todas as fotos foram tiradas e exibe o botão "Enviar"
+function checkAllPhotosCaptured() {
+  const allCaptured = currentDocumentPhotos.every((photo) => capturedPhotos[photo]);
+  submitButton.style.display = allCaptured ? "block" : "none";
+}
