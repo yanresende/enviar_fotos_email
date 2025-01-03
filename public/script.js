@@ -57,14 +57,24 @@ async function startCamera(facingMode = "environment") {
   }
 }
 
-// Atualiza o overlay da câmera
-function updateOverlay(type) {
+let currentDocument = null; // Define qual documento está em uso
+
+function updateOverlay(photoType) {
   const overlay = document.getElementById("overlay");
-  overlay.classList.remove("rectangle", "oval");
-  if (type === "selfie") {
+  overlay.classList.remove(
+    "rectangle-horizontal",
+    "rectangle-vertical",
+    "oval"
+  );
+
+  if (photoType === "selfie") {
     overlay.classList.add("oval");
-  } else {
-    overlay.classList.add("rectangle");
+  } else if (photoType === "identityFront" && currentDocument === "CNH") {
+    overlay.classList.add("rectangle-vertical");
+  } else if (photoType === "identityFront" && currentDocument === "RG") {
+    overlay.classList.add("rectangle-horizontal");
+  } else if (photoType === "identityBack" && currentDocument === "RG") {
+    overlay.classList.add("rectangle-horizontal");
   }
 }
 
@@ -78,8 +88,8 @@ function checkAllPhotosCaptured() {
   }
 }
 
-// Captura o clique no botão CNH
 chooseCNH.addEventListener("click", () => {
+  currentDocument = "CNH";
   documentStep.style.display = "none";
   photoForm.style.display = "block";
   updatePhotoOptions(photoOptions.CNH);
@@ -87,8 +97,8 @@ chooseCNH.addEventListener("click", () => {
   updateOverlay(photoTypeSelect.value);
 });
 
-// Captura o clique no botão RG
 chooseRG.addEventListener("click", () => {
+  currentDocument = "RG";
   documentStep.style.display = "none";
   photoForm.style.display = "block";
   updatePhotoOptions(photoOptions.RG);
@@ -98,14 +108,7 @@ chooseRG.addEventListener("click", () => {
 
 // Atualiza a câmera ao trocar o tipo de foto
 photoTypeSelect.addEventListener("change", () => {
-  const selectedOption = photoTypeSelect.value;
-  if (selectedOption === "selfie") {
-    startCamera("user");
-    updateOverlay("selfie");
-  } else {
-    startCamera("environment");
-    updateOverlay("other");
-  }
+  updateOverlay(photoTypeSelect.value);
 });
 
 // Captura a foto
