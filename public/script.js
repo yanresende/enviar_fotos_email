@@ -9,6 +9,7 @@ const photoCanvasContext = photoCanvas.getContext("2d");
 const captureButton = document.getElementById("capture");
 const retakeButton = document.getElementById("retake");
 const nextButton = document.getElementById("next");
+const submitButton = document.getElementById("submitButton");
 
 const photoOptions = {
   CNH: [
@@ -22,8 +23,9 @@ const photoOptions = {
   ],
 };
 
+let currentDocumentPhotos = [];
+let capturedPhotos = {};
 let currentStream = null;
-const photos = {};
 
 // Atualiza as opções de tipo de foto
 function updatePhotoOptions(options) {
@@ -34,6 +36,7 @@ function updatePhotoOptions(options) {
     opt.textContent = option.text;
     photoTypeSelect.appendChild(opt);
   });
+  currentDocumentPhotos = options.map((option) => option.value);
 }
 
 // Inicia a câmera
@@ -62,6 +65,16 @@ function updateOverlay(type) {
     overlay.classList.add("oval");
   } else {
     overlay.classList.add("rectangle");
+  }
+}
+
+// Verifica se todas as fotos foram tiradas
+function checkAllPhotosCaptured() {
+  const allCaptured = currentDocumentPhotos.every(
+    (photo) => capturedPhotos[photo]
+  );
+  if (allCaptured) {
+    submitButton.style.display = "block";
   }
 }
 
@@ -123,8 +136,11 @@ retakeButton.addEventListener("click", () => {
 nextButton.addEventListener("click", () => {
   const image = photoCanvas.toDataURL("image/png");
   const photoType = photoTypeSelect.value;
-  photos[photoType] = image;
+  capturedPhotos[photoType] = image;
   alert(`Foto ${photoType} salva com sucesso!`);
+
   photoPreview.style.display = "none";
   photoForm.style.display = "block";
+
+  checkAllPhotosCaptured();
 });
