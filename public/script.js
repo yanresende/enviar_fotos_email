@@ -146,17 +146,37 @@ retakeButton.addEventListener("click", () => {
   startCamera(photoTypeSelect.value === "selfie" ? "user" : "environment");
 });
 
-// Salva a foto e continua
+// Avança para a próxima foto
 nextButton.addEventListener("click", () => {
-  const image = photoCanvas.toDataURL("image/png");
   const photoType = photoTypeSelect.value;
+
+  // Salva a foto capturada
+  const image = photoCanvas.toDataURL("image/png");
   capturedPhotos[photoType] = image;
   alert(`Foto ${photoType} salva com sucesso!`);
 
+  // Verifica se todas as fotos foram capturadas
+  checkAllPhotosCaptured();
+
+  // Encontra o próximo tipo de foto que ainda não foi capturado
+  const nextPhotoType = currentDocumentPhotos.find(
+    (type) => !capturedPhotos[type]
+  );
+
+  // Se não houver mais fotos para capturar, exibe o botão de enviar
+  if (nextPhotoType) {
+    // Atualiza o seletor de tipo de foto para o próximo
+    photoTypeSelect.value = nextPhotoType;
+    updateOverlay(nextPhotoType); // Atualiza o overlay conforme o tipo de foto
+    startCamera(nextPhotoType === "selfie" ? "user" : "environment"); // Muda a câmera se for selfie ou outro tipo
+  } else {
+    // Caso todas as fotos tenham sido tiradas, mostra o botão de enviar
+    submitButton.style.display = "block";
+  }
+
+  // Atualiza a exibição dos formulários
   photoPreview.style.display = "none";
   photoForm.style.display = "block";
-
-  checkAllPhotosCaptured();
 });
 
 // Verifica se todas as fotos foram tiradas e exibe o botão "Enviar"
