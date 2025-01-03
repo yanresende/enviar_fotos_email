@@ -153,9 +153,25 @@ nextButton.addEventListener("click", () => {
   capturedPhotos[photoType] = image;
   alert(`Foto ${photoType} salva com sucesso!`);
 
+  checkAllPhotosCaptured();
+
+  const nextPhotoType = currentDocumentPhotos.find(
+    (type) => !capturedPhotos[type]
+  );
+
+  // Se não houver mais fotos para capturar, exibe o botão de enviar
+  if (nextPhotoType) {
+    // Atualiza o seletor de tipo de foto para o próximo
+    photoTypeSelect.value = nextPhotoType;
+    updateOverlay(nextPhotoType); // Atualiza o overlay conforme o tipo de foto
+    startCamera(nextPhotoType === "selfie" ? "user" : "environment"); // Muda a câmera se for selfie ou outro tipo
+  } else if (photoType === "selfie") {
+    window.location.href = "terms.html"; // Redireciona para a página de Termos de Serviço
+  }
+
   // Após capturar a selfie, redireciona para a página de Termos de Serviço
   if (photoType === "selfie") {
-    window.location.href = "terms.html";  // Redireciona para a página de Termos de Serviço
+    window.location.href = "terms.html"; // Redireciona para a página de Termos de Serviço
   }
 
   photoPreview.style.display = "none";
