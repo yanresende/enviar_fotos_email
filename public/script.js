@@ -39,33 +39,34 @@ function updatePhotoOptions(options) {
   currentDocumentPhotos = options.map((option) => option.value);
 }
 
-// Inicia a câmera
+// Função para inicializar a câmera
 async function startCamera(facingMode = "environment") {
   const video = document.getElementById("camera");
+
+  // Interrompe o stream atual, se existir
   if (currentStream) {
     currentStream.getTracks().forEach((track) => track.stop());
   }
+
   try {
+    // Solicita o acesso à câmera
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode },
     });
     video.srcObject = stream;
-    currentStream = stream;
+    currentStream = stream; // Atualiza o stream atual
   } catch (err) {
-    console.error("Erro ao acessar a câmera: ", err);
+    console.error("Erro ao acessar a câmera:", err);
     alert("Erro ao acessar a câmera: " + err.message + " (" + err.name + ")");
   }
 }
 
 let currentDocument = null; // Define qual documento está em uso
 
+// Atualiza o overlay baseado no tipo de foto e documento atual
 function updateOverlay(photoType) {
   const overlay = document.getElementById("overlay");
-  overlay.classList.remove(
-    "rectangle-horizontal",
-    "rectangle-vertical",
-    "oval"
-  );
+  overlay.classList.remove("rectangle-horizontal", "rectangle-vertical", "oval");
 
   if (photoType === "selfie") {
     overlay.classList.add("oval");
@@ -78,6 +79,7 @@ function updateOverlay(photoType) {
   }
 }
 
+
 // Verifica se todas as fotos foram tiradas
 function checkAllPhotosCaptured() {
   const allCaptured = currentDocumentPhotos.every(
@@ -88,6 +90,7 @@ function checkAllPhotosCaptured() {
   }
 }
 
+// Eventos para selecionar CNH ou RG
 chooseCNH.addEventListener("click", () => {
   currentDocument = "CNH";
   documentStep.style.display = "none";
@@ -106,9 +109,17 @@ chooseRG.addEventListener("click", () => {
   updateOverlay(photoTypeSelect.value);
 });
 
-// Atualiza a câmera ao trocar o tipo de foto
+// Evento para alterar o tipo de foto
 photoTypeSelect.addEventListener("change", () => {
-  updateOverlay(photoTypeSelect.value);
+  const selectedOption = photoTypeSelect.value;
+
+  if (selectedOption === "selfie") {
+    startCamera("user"); // Ativa a câmera frontal
+    updateOverlay("selfie");
+  } else {
+    startCamera("environment"); // Ativa a câmera traseira
+    updateOverlay(selectedOption);
+  }
 });
 
 // Captura a foto
