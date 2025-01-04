@@ -159,26 +159,19 @@ nextButton.addEventListener("click", () => {
     (type) => !capturedPhotos[type]
   );
 
-  // Se não houver mais fotos para capturar, exibe o botão de enviar
+  // Se houver mais fotos para capturar
   if (nextPhotoType) {
-    // Atualiza o seletor de tipo de foto para o próximo
     photoTypeSelect.value = nextPhotoType;
-    updateOverlay(nextPhotoType); // Atualiza o overlay conforme o tipo de foto
-    startCamera(nextPhotoType === "selfie" ? "user" : "environment"); // Muda a câmera se for selfie ou outro tipo
-  } else if (photoType === "selfie") {
-    window.location.href = "terms.html"; // Redireciona para a página de Termos de Serviço
-  }
-
-  // Após capturar a selfie, redireciona para a página de Termos de Serviço
-  if (photoType === "selfie") {
-    window.location.href = "terms.html"; // Redireciona para a página de Termos de Serviço
+    updateOverlay(nextPhotoType);
+    startCamera(nextPhotoType === "selfie" ? "user" : "environment");
+  } else {
+    checkAllPhotosCaptured(); // Verifica se todas as fotos foram capturadas
   }
 
   photoPreview.style.display = "none";
   photoForm.style.display = "block";
-
-  checkAllPhotosCaptured();
 });
+
 
 // Verifica se todas as fotos foram tiradas e exibe o botão "Enviar"
 function checkAllPhotosCaptured() {
