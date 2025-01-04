@@ -198,7 +198,7 @@ submitButton.addEventListener("click", async (e) => {
 
     if (response.ok) {
       alert("Fotos enviadas com sucesso!");
-      window.location.href = "submit.html"; // Redireciona para a página final
+      window.location.href = "terms.html";
     } else {
       const errorText = await response.text();
       alert(`Erro no envio: ${errorText}`);

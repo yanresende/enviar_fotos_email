@@ -202,18 +202,23 @@ button[type="submit"] {
     border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s ease, transform 0.2s ease;
-    margin-top: 15px;
 }
 
-button[type="button"]:hover,
-button[type="submit"]:hover {
-    background: linear-gradient(135deg, #2575fc, #6a11cb);
-    transform: scale(1.05);
+/* Botão Capturar Foto */
+#capture {
+    margin-bottom: 10px;
+    /* Menos margem entre os botões */
 }
 
-button[type="button"]:active,
-button[type="submit"]:active {
-    transform: scale(0.95);
+#submitButton {
+    margin-top: 10px;
+    /* Menos distância entre os botões */
+}
+
+/* Ajuste do botão "Enviar" */
+button[type="submit"] {
+    margin-top: 10px;
+    /* Garante que o botão "Enviar" fique mais perto do "Capturar Foto" */
 }
 
 /* Ajuste da posição dos botões no formulário */
@@ -221,32 +226,9 @@ button[type="submit"]:active {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
-    /* Espaçamento maior entre os botões */
+    gap: 10px;
+    /* Menor espaço entre os botões */
     margin-top: 20px;
-}
-
-/* Estilo do botão Enviar */
-button[type="submit"] {
-    padding: 12px 25px;
-    font-size: 1rem;
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.2s ease;
-    margin-top: 20px;
-    /* Garante que fique abaixo do botão "Capturar Foto" */
-}
-
-button[type="submit"]:hover {
-    background: linear-gradient(135deg, #2575fc, #6a11cb);
-    transform: scale(1.05);
-}
-
-button[type="submit"]:active {
-    transform: scale(0.95);
 }
 
 /* Estilo de Pré-visualização */
