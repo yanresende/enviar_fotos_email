@@ -21,37 +21,6 @@ p {
     font-weight: normal;
 }
 
-/* Ajuste de alinhamento para a página inicial */
-#welcomePage {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-#welcomePage #logo {
-    margin-bottom: 20px;
-    /* Espaçamento entre a logo e o botão */
-}
-
-#welcomePage #startButton {
-    margin-top: 20px;
-    /* Garante que o botão fique abaixo da logo */
-    padding: 15px 30px;
-    font-size: 1.2rem;
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-#welcomePage #startButton:hover {
-    background: linear-gradient(135deg, #2575fc, #6a11cb);
-}
-
 /* Configuração da área centralizada (para todas as páginas) */
 #documentStep,
 #photoForm,
@@ -79,6 +48,25 @@ h2 {
     font-size: 1.5rem;
     margin-bottom: 20px;
     color: #fff;
+}
+
+#submitButton {
+    display: none;
+    /* Inicialmente escondido */
+}
+
+#welcomePage {
+    display: flex;
+    flex-direction: column;
+    /* Itens empilhados na vertical */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+#logo {
+    margin-bottom: 20px;
+    /* Espaço entre logo e botão */
 }
 
 /* Botões de Seleção de Documento */
@@ -191,44 +179,24 @@ video {
     border-radius: 50%;
 }
 
-/* Botões de captura e envio */
-button[type="button"],
-button[type="submit"] {
-    padding: 12px 25px;
-    font-size: 1rem;
-    background: linear-gradient(135deg, #6a11cb, #2575fc);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.2s ease;
-}
-
-/* Botão Capturar Foto */
-#capture {
-    margin-bottom: 10px;
-    /* Menos margem entre os botões */
-}
-
-#submitButton {
-    margin-top: 10px;
-    /* Menos distância entre os botões */
-}
-
-/* Ajuste do botão "Enviar" */
-button[type="submit"] {
-    margin-top: 10px;
-    /* Garante que o botão "Enviar" fique mais perto do "Capturar Foto" */
-}
-
-/* Ajuste da posição dos botões no formulário */
+/* Ajuste de botão de captura abaixo da sobreposição */
 #photoForm .controls {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    /* Menor espaço entre os botões */
-    margin-top: 20px;
+    margin-top: 10px; /* Ajuste de espaçamento */
+}
+
+/* Botão Capturar Foto */
+#capture {
+    margin-top: 10px; /* Ajuste para ficar mais próximo da câmera */
+    margin-bottom: 5px; /* Menos margem entre o botão de captura e o de envio */
+}
+
+/* Botão Enviar */
+#submitButton {
+    margin-top: 5px; /* Ajuste a margem para o botão Enviar */
 }
 
 /* Estilo de Pré-visualização */
