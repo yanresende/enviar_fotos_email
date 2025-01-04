@@ -185,3 +185,45 @@ function checkAllPhotosCaptured() {
   const allCaptured = currentDocumentPhotos.every((photo) => capturedPhotos[photo]);
   submitButton.style.display = allCaptured ? "block" : "none";
 }
+
+submitButton.addEventListener("click", async (e) => {
+  e.preventDefault(); // Evita o comportamento padrão.
+
+  const formData = new FormData();
+
+  // Adiciona cada foto capturada ao FormData
+  Object.entries(capturedPhotos).forEach(([photoType, photoData]) => {
+    const blob = dataURItoBlob(photoData); // Converte Base64 para Blob
+    formData.append(photoType, blob, `${photoType}.png`);
+  });
+
+  try {
+    const response = await fetch("/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (response.ok) {
+      alert("Fotos enviadas com sucesso!");
+      window.location.href = "submit.html"; // Redireciona para a página final
+    } else {
+      const errorText = await response.text();
+      alert(`Erro no envio: ${errorText}`);
+    }
+  } catch (error) {
+    console.error("Erro ao enviar as fotos:", error);
+    alert("Erro ao enviar as fotos. Verifique sua conexão ou tente novamente.");
+  }
+});
+
+// Função para converter Base64 para Blob
+function dataURItoBlob(dataURI) {
+  const byteString = atob(dataURI.split(",")[1]);
+  const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ab], { type: mimeString });
+}
