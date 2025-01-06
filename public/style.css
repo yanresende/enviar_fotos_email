@@ -161,14 +161,32 @@ video {
 
 /* Molde retangular horizontal (RG) */
 .overlay.rectangle-horizontal::before {
-    width: 300px;
-    height: 200px;
+    width: 250px;
+    height: 150px;
 }
 
-/* Molde retangular vertical (CNH) */
+.overlay.rectangle-vertical::before,
+.overlay.rectangle-vertical::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    background: transparent;
+    border: 2px solid #fff;
+    width: 250px;
+    /* Largura dos retângulos horizontais */
+    height: 75px;
+    /* Altura dos retângulos horizontais */
+    transform: translateX(-50%);
+}
+
 .overlay.rectangle-vertical::before {
-    width: 200px;
-    height: 300px;
+    top: 25%;
+    /* Posição do primeiro retângulo */
+}
+
+.overlay.rectangle-vertical::after {
+    top: 50%;
+    /* Posição do segundo retângulo logo abaixo do primeiro */
 }
 
 /* Molde oval (Selfie) */
