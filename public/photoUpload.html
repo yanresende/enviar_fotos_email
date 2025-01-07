@@ -18,6 +18,13 @@
     <form id="photoForm" enctype="multipart/form-data" style="display: none;">
         <h1>Capture as fotos</h1>
         <select id="photoType" name="photoType"></select>
+        <div class="file-input-container">
+            <label for="photoInput" class="file-input-label">
+                <span class="file-input-icon">📷</span>
+                Tirar Foto ou Escolher do Dispositivo
+            </label>
+            <input type="file" id="photoInput" accept="image/*" capture hidden>
+        </div>
         <div class="camera-container">
             <video id="camera" autoplay></video>
             <div id="overlay" class="overlay"></div>

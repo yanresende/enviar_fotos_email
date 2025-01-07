@@ -259,3 +259,40 @@ video {
 #photoPreview button:active {
     transform: scale(0.95);
 }
+/* Estilo para o contêiner do input de arquivo */
+.file-input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+/* Estilo do botão estilizado */
+.file-input-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #fff;
+    font-size: 1.1rem;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.3s ease, background 0.3s ease;
+    text-align: center;
+}
+
+.file-input-label:hover {
+    background: linear-gradient(135deg, #2575fc, #6a11cb);
+    transform: scale(1.05);
+}
+
+.file-input-label:active {
+    transform: scale(0.95);
+}
+
+/* Ícone para indicar que é uma câmera */
+.file-input-icon {
+    margin-right: 10px;
+    font-size: 1.5rem;
+}

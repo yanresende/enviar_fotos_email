@@ -27,6 +27,37 @@ let currentDocumentPhotos = [];
 let capturedPhotos = {};
 let currentStream = null;
 
+const photoInput = document.getElementById("photoInput");
+
+photoInput.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const image = new Image();
+      image.onload = function () {
+        // Configura o canvas para o tamanho da imagem
+        photoCanvas.width = image.width;
+        photoCanvas.height = image.height;
+
+        // Desenha a imagem no canvas
+        photoCanvasContext.drawImage(image, 0, 0);
+
+        // Exibe o preview
+        photoPreview.style.display = "block";
+        photoForm.style.display = "none";
+
+        // Armazena a imagem capturada
+        const photoType = photoTypeSelect.value;
+        capturedPhotos[photoType] = photoCanvas.toDataURL("image/png");
+        checkAllPhotosCaptured();
+      };
+      image.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
 // Atualiza as opções de tipo de foto
 function updatePhotoOptions(options) {
   photoTypeSelect.innerHTML = "";
