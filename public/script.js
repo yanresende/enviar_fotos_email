@@ -11,6 +11,8 @@ const retakeButton = document.getElementById("retake");
 const nextButton = document.getElementById("next");
 const submitButton = document.getElementById("submitButton");
 
+////37B6FF azul logo 6a11cb roxo
+
 const photoOptions = {
   CNH: [
     { value: "identityFront", text: "CNH (Frente)" },
